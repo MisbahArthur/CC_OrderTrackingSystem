@@ -1,0 +1,24 @@
+services:
+  cassandra:
+    image: cassandra:5.0.7 # as of creation
+    container_name: cassandra_node
+    ports:
+      - "9042:9042" # Native transport port (CQL)
+    environment:
+      - CASSANDRA_CLUSTER_NAME=MyCluster
+      - CASSANDRA_DC=datacenter1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      # Optional: Set memory limits to prevent the JVM from hogging host RAM
+      - MAX_HEAP_SIZE=1G
+      - HEAP_NEWSIZE=200M
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+    healthcheck:
+      test: ["CMD-SHELL", "nodetool status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: always
+
+volumes:
+  cassandra_data:
