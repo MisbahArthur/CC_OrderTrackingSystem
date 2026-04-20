@@ -1,24 +1,35 @@
 services:
   cassandra:
-    image: cassandra:5.0.7 # as of creation
+    image: cassandra:5.0.7
     container_name: cassandra_node
     ports:
-      - "9042:9042" # Native transport port (CQL)
+      - "9042:9042"
     environment:
       - CASSANDRA_CLUSTER_NAME=MyCluster
       - CASSANDRA_DC=datacenter1
       - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
-      # Optional: Set memory limits to prevent the JVM from hogging host RAM
       - MAX_HEAP_SIZE=1G
       - HEAP_NEWSIZE=200M
     volumes:
       - cassandra_data:/var/lib/cassandra
     healthcheck:
-      test: ["CMD-SHELL", "nodetool status"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      # Updated to check CQL readiness specifically
+      test: ["CMD-SHELL", "cqlsh -e 'describe keyspaces'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     restart: always
+
+  cassandra-init:
+    image: cassandra:5.0.7
+    container_name: cassandra_init_script
+    depends_on:
+      cassandra:
+        condition: service_healthy
+    volumes:
+      - ./init.cql:/init.cql
+    # We use 'cassandra_node' as the host to match your container_name
+    command: /bin/bash -c "echo 'Loading schema...' && cqlsh cassandra_node -f /init.cql"
 
 volumes:
   cassandra_data:
