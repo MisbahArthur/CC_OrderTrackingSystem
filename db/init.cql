@@ -5,7 +5,7 @@ WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
 USE order_keyspace;
 CREATE TABLE IF NOT EXISTS order_tracking (
     order_id UUID,
-    repair_id TIMEUUID, -- Ensures uniqueness and stores time of entry
+    repair_id TIMEUUID,
     customer_name text,
     repair_device text,
     order_creation TIMEUUID,
