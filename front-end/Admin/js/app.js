@@ -1,4 +1,4 @@
-import { apiCloseRepair, apiCreateRepair, apiGetOrders, apiUpdateRepair } from './api.js';
+import { apiCreateRepair, apiGetOrders, apiUpdateRepair } from './api.js';
 import { getStatusDisplay, renderOrders, renderRecentTable, renderStats, shortId, stripHtml } from './render.js';
 import { initTheme, toggleTheme } from './theme.js';
 
@@ -30,13 +30,11 @@ function openEditDialog(repairId) {
   const r = repairs.find(x => x.repair_id === repairId);
   if (!r) return;
   editingRepairId = repairId;
-  document.getElementById('edit-customer').value = r.customer_name || '';
-  document.getElementById('edit-device').value = r.repair_device || '';
   document.getElementById('edit-cost').value = r.repair_cost !== null && r.repair_cost !== undefined ? r.repair_cost : '';
   document.getElementById('edit-eta').value = r.repair_eta || '';
   document.getElementById('edit-status').value = '';
   document.getElementById('edit-subtitle').textContent =
-    'Editing repair ' + shortId(repairId) + ' \u2014 leave fields blank to keep unchanged';
+    'Editing repair ' + shortId(repairId) + ' \u2014 current status: ' + stripHtml(getStatusDisplay(r));
   document.getElementById('dialog-edit').showModal();
 }
 
@@ -96,26 +94,17 @@ async function handleCreate() {
 
 async function handleEdit() {
   if (!editingRepairId) return;
-  const data = {};
-  const c = document.getElementById('edit-customer').value.trim();
-  const d = document.getElementById('edit-device').value.trim();
+  const r = repairs.find(x => x.repair_id === editingRepairId);
+  if (!r) return;
+  const status = document.getElementById('edit-status').value;
   const cost = document.getElementById('edit-cost').value;
   const eta = document.getElementById('edit-eta').value.trim();
-  const status = document.getElementById('edit-status').value;
-
-  if (c) data.customer_name = c;
-  if (d) data.repair_device = d;
-  if (cost) data.repair_cost = parseFloat(cost);
-  if (eta) data.repair_eta = eta;
-  if (status) data.repair_status = status;
-
-  if (Object.keys(data).length === 0) {
-    alert('No changes to save.');
+  if (!status && !cost && !eta) {
+    alert('At least one field must be filled.');
     return;
   }
-
   try {
-    await apiUpdateRepair(editingRepairId, data);
+    await apiUpdateRepair(r.order_id, editingRepairId, status, cost || undefined, eta || undefined);
     closeAllDialogs();
     await loadData();
   } catch (e) {
@@ -125,8 +114,10 @@ async function handleEdit() {
 
 async function handleClose() {
   if (!closingRepairId) return;
+  const r = repairs.find(x => x.repair_id === closingRepairId);
+  if (!r) return;
   try {
-    await apiCloseRepair(closingRepairId);
+    await apiUpdateRepair(r.order_id, closingRepairId, 'Finished');
     closeAllDialogs();
     await loadData();
   } catch (e) {
