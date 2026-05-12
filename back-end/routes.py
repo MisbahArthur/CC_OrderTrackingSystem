@@ -1,8 +1,8 @@
+import datetime
 import uuid
-
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 from database import get_cassandra_session
-from business_logic import build_new_order, enrich_row
+from business_logic import enrich_row
 from models import OrderTracking
 
 router = APIRouter()
@@ -29,13 +29,31 @@ def get_order_repairs(order_id: str, session=Depends(get_cassandra_session)):
     return result
 
 @router.put("/admin/updateorder/{order_id}")
-def update_order(order_id: str, repair_id: str, repair_status: str=Query(..., pattern=r"^(Picked-up|Work in progress|picking up parts|Finished)$"), session=Depends(get_cassandra_session)):
+def update_order(order_id: str, repair_id: str,repair_status:str, session=Depends(get_cassandra_session)):
     session.execute(
         "UPDATE order_tracking SET repair_status = %s WHERE order_id = %s AND repair_id = %s",
         (repair_status, uuid.UUID(order_id), uuid.UUID(repair_id))
     )
     return {"message": f"Order {order_id} repair {repair_id} status updated to {repair_status}"}
 
+@router.post("/admin/createorder")
+def create_order(order: OrderTracking, session=Depends(get_cassandra_session)):
+    
+    new_order_id = uuid.uuid4()
+    new_repair_id = uuid.uuid1()
+    creation_time = uuid.uuid1()
+    current_time = datetime.datetime.now()
+
+    query = """
+        INSERT INTO order_tracking (order_id, repair_id, customer_name, repair_device, order_creation, repair_cost, repair_start, repair_finish, repair_status, repair_eta) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """
+    session.execute(query, (new_order_id, new_repair_id, order.customer_name, order.repair_device, creation_time, order.repair_cost, current_time, None, order.repair_status, order.repair_eta))
+
+    return {
+        "message": "Order created successfully",
+        "order_id": str(new_order_id),
+        "repair_id": str(new_repair_id)
+    }
 
 # customer endpoints
 @router.get("/customer/vieworders/{order_id}")
