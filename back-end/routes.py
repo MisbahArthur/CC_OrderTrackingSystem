@@ -1,5 +1,6 @@
 import datetime
 import uuid
+from typing import Optional
 from fastapi import APIRouter, Depends
 from database import get_cassandra_session
 from business_logic import enrich_row
@@ -29,12 +30,14 @@ def get_order_repairs(order_id: str, session=Depends(get_cassandra_session)):
     return result
 
 @router.put("/admin/updateorder/{order_id}")
-def update_order(order_id: str, repair_id: str,repair_status:str, session=Depends(get_cassandra_session)):
+def update_order(order_id: str, repair_id: str, repair_status: Optional[str] = None,
+                  repair_cost: Optional[float] = None, repair_eta: Optional[str] = None,
+                  session=Depends(get_cassandra_session)):
     session.execute(
-        "UPDATE order_tracking SET repair_status = %s WHERE order_id = %s AND repair_id = %s",
-        (repair_status, uuid.UUID(order_id), uuid.UUID(repair_id))
+        "UPDATE order_tracking SET repair_status = %s, repair_cost = %s, repair_eta = %s WHERE order_id = %s AND repair_id = %s",
+        (repair_status, repair_cost, repair_eta, uuid.UUID(order_id), uuid.UUID(repair_id))
     )
-    return {"message": f"Order {order_id} repair {repair_id} status updated to {repair_status}"}
+    return {"message": f"Order {order_id} repair {repair_id} updated"}
 
 @router.post("/admin/createorder")
 def create_order(order: OrderTracking, session=Depends(get_cassandra_session)):
