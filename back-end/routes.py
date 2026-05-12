@@ -1,8 +1,9 @@
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from database import get_cassandra_session
-from business_logic import calculate_actual_hours, parse_eta_hours, normalize_status, enrich_row
+from business_logic import build_new_order, enrich_row
+from models import OrderTracking
 
 router = APIRouter()
 
@@ -26,6 +27,15 @@ def get_order_repairs(order_id: str, session=Depends(get_cassandra_session)):
     if not result:
         return {"message": "No repairs found for this order"}
     return result
+
+@router.put("/admin/updateorder/{order_id}")
+def update_order(order_id: str, repair_id: str, repair_status: str=Query(..., pattern=r"^(Picked-up|Work in progress|picking up parts|Finished)$"), session=Depends(get_cassandra_session)):
+    session.execute(
+        "UPDATE order_tracking SET repair_status = %s WHERE order_id = %s AND repair_id = %s",
+        (repair_status, uuid.UUID(order_id), uuid.UUID(repair_id))
+    )
+    return {"message": f"Order {order_id} repair {repair_id} status updated to {repair_status}"}
+
 
 # customer endpoints
 @router.get("/customer/vieworders/{order_id}")

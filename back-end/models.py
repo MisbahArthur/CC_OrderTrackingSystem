@@ -1,7 +1,7 @@
 from typing import Optional
 from datetime import datetime
 from decimal import Decimal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 import uuid
 
 
@@ -14,5 +14,5 @@ class OrderTracking(BaseModel):
     repair_cost: Decimal
     repair_start: Optional[datetime] = None
     repair_finish: Optional[datetime] = None
-    repair_status: str = Field(..., pattern=r"^(Picked-up|Work in progress|picking up parts|Finished)$") #ensures only valid status values are accepted
+    repair_status: str
     repair_eta: str
