@@ -30,9 +30,25 @@ export function getStatusDisplay(repair) {
   return repair.repair_status_display || repair.repair_status || '\u2014';
 }
 
-export function isComplete(status) {
-  const s = (status || '').toLowerCase();
-  return s.includes('complete') || s.includes('finish');
+const STATUS_OPEN = 'Picked-up';
+const STATUS_IN_PROGRESS = 'Work in progress';
+const STATUS_PARTS = 'Picking up parts';
+const STATUS_FINISHED = 'Finished';
+
+function matchStatus(r, value) {
+  return (r.repair_status || '') === value || (r.repair_status_display || '') === value;
+}
+
+function isOpen(r) {
+  return matchStatus(r, STATUS_OPEN);
+}
+
+function isInProgress(r) {
+  return matchStatus(r, STATUS_IN_PROGRESS) || matchStatus(r, STATUS_PARTS);
+}
+
+export function isComplete(r) {
+  return matchStatus(r, STATUS_FINISHED);
 }
 
 export function groupByOrder(items) {
@@ -52,15 +68,17 @@ export function stripHtml(s) {
 }
 
 export function actionButtonsHtml(r) {
-  const complete = isComplete(r.repair_status);
+  const complete = isComplete(r);
   return `
     <div class="table-actions">
-      <button class="circle transparent small btn-edit ripple" data-repair-id="${r.repair_id}" title="Edit">
+      <button class="circle transparent small btn-edit ripple" data-repair-id="${r.repair_id}">
         <i class="small">edit</i>
+        <div class="tooltip">Update</div>
       </button>
       ${complete ? '' : `
-      <button class="circle transparent small btn-close ripple" data-repair-id="${r.repair_id}" title="Close">
+      <button class="circle transparent small btn-close ripple" data-repair-id="${r.repair_id}">
         <i class="small">check_circle</i>
+        <div class="tooltip">Close</div>
       </button>
       `}
     </div>
@@ -69,15 +87,9 @@ export function actionButtonsHtml(r) {
 
 export function renderStats(repairs) {
   const total = repairs.length;
-  const open = repairs.filter(r => {
-    const s = (r.repair_status || '').toLowerCase();
-    return s.includes('created') || s.includes('queue') || s.includes('scheduled') || s === '';
-  }).length;
-  const inProgress = repairs.filter(r => {
-    const s = (r.repair_status || '').toLowerCase();
-    return s.includes('progress') || s.includes('review') || s.includes('waiting');
-  }).length;
-  const complete = repairs.filter(r => isComplete(r.repair_status)).length;
+  const open = repairs.filter(r => isOpen(r)).length;
+  const inProgress = repairs.filter(r => isInProgress(r)).length;
+  const complete = repairs.filter(r => isComplete(r)).length;
 
   document.getElementById('stat-total').textContent = total;
   document.getElementById('stat-open').textContent = open;
@@ -115,33 +127,28 @@ export function renderRecentTable(repairs) {
 export function renderFilterChips(repairs, currentFilter) {
   const container = document.getElementById('filter-chips');
   const counts = { all: repairs.length };
-  counts.open = repairs.filter(r => {
-    const s = (r.repair_status || '').toLowerCase();
-    return s.includes('created') || s.includes('queue') || s.includes('scheduled') || s === '';
-  }).length;
-  counts.progress = repairs.filter(r => {
-    const s = (r.repair_status || '').toLowerCase();
-    return s.includes('progress') || s.includes('review') || s.includes('waiting');
-  }).length;
-  counts.complete = repairs.filter(r => isComplete(r.repair_status)).length;
+  counts.open = repairs.filter(r => isOpen(r)).length;
+  counts.progress = repairs.filter(r => isInProgress(r)).length;
+  counts.complete = repairs.filter(r => isComplete(r)).length;
 
-  const labels = { all: 'All', open: 'Open', progress: 'In Progress', complete: 'Completed' };
+  const categories = { all: 'All', open: 'Open', progress: 'In Progress', complete: 'Completed' };
   const colors = { all: '', open: 'orange', progress: 'blue', complete: 'green' };
 
-  container.innerHTML = Object.entries(labels).map(([key, label]) => {
-    const isSelected = currentFilter === key;
+  let html = '';
+  for (const [key, label] of Object.entries(categories)) {
     const color = colors[key];
     let cls = 'chip ripple';
-    if (isSelected) {
+    if (currentFilter === key) {
       cls += ` fill${color ? ' ' + color : ' primary'}`;
     } else {
       cls += ` border${color ? ` ${color}-text ${color}-border` : ''}`;
     }
-    return `<button class="${cls}" data-filter="${key}">
-      ${label}
-      <span class="count" style="margin-left:4px;">${counts[key]}</span>
+    html += `<button class="${cls}" data-filter="${key}">
+      ${label} <span class="count" style="margin-left:4px;">${counts[key]}</span>
     </button>`;
-  }).join('');
+  }
+
+  container.innerHTML = html;
 }
 
 export function renderOrders(repairs, currentFilter) {
@@ -152,11 +159,10 @@ export function renderOrders(repairs, currentFilter) {
   let filtered = [...repairs];
   if (currentFilter !== 'all') {
     filtered = filtered.filter(r => {
-      const s = (r.repair_status || '').toLowerCase();
-      if (currentFilter === 'open') return s.includes('created') || s.includes('queue') || s.includes('scheduled') || s === '';
-      if (currentFilter === 'progress') return s.includes('progress') || s.includes('review') || s.includes('waiting');
-      if (currentFilter === 'complete') return isComplete(r.repair_status);
-      return true;
+      if (currentFilter === 'open') return isOpen(r);
+      if (currentFilter === 'progress') return isInProgress(r);
+      if (currentFilter === 'complete') return isComplete(r);
+      return matchStatus(r, currentFilter);
     });
   }
   if (search) {
@@ -181,7 +187,7 @@ export function renderOrders(repairs, currentFilter) {
   renderFilterChips(repairs, currentFilter);
 
   container.innerHTML = groups.map(g => `
-    <div class="order-card margin-bottom">
+    <div class="order-card small-margin">
       <div class="order-card-header row middle-align collapsed" data-toggle="group">
         <i class="arrow small">expand_more</i>
         <div>

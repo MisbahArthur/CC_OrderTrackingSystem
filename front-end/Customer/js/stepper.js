@@ -1,13 +1,13 @@
 const STEPS = [
   { key: 'Picked-up', label: 'Picked-up', icon: 'inventory_2' },
-  { key: 'picking up parts', label: 'Picking up\nparts', icon: 'handyman' },
+  { key: 'Picking up parts', label: 'Picking up\nparts', icon: 'handyman' },
   { key: 'Work in progress', label: 'Work in\nprogress', icon: 'build' },
   { key: 'Finished', label: 'Finished', icon: 'check_circle' },
 ];
 
 const STATUS_ORDER = {
   'Picked-up': 0,
-  'picking up parts': 1,
+  'Picking up parts': 1,
   'Work in progress': 2,
   'Finished': 3,
 };
@@ -60,7 +60,7 @@ export function renderStepper(currentStatus, containerEl) {
 export function getStatusMessage(status) {
   const messages = {
     'Picked-up': 'Your device has been received and is waiting to be assessed.',
-    'picking up parts': 'We are sourcing the necessary parts for your repair.',
+    'Picking up parts': 'We are sourcing the necessary parts for your repair.',
     'Work in progress': 'Your repair is currently being worked on.',
     'Finished': 'Your repair is complete and ready for pickup!',
   };
