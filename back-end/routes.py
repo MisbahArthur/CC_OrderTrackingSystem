@@ -58,6 +58,15 @@ def create_order(order: OrderTracking, session=Depends(get_cassandra_session)):
         "repair_id": str(new_repair_id)
     }
 
+@router.put("/admin/closeorder/{order_id}")
+def close_order(order_id: str, repair_id: str, session=Depends(get_cassandra_session)):
+    current_time = datetime.datetime.now()
+    session.execute(
+        "UPDATE order_tracking SET repair_status = %s, repair_finish = %s WHERE order_id = %s AND repair_id = %s",
+        ("Closed", current_time, uuid.UUID(order_id), uuid.UUID(repair_id))
+    )
+    return {"message": f"Order {order_id} repair {repair_id} has been successfully closed"}
+
 # customer endpoints
 @router.get("/customer/vieworders/{order_id}")
 def get_order_repairs(order_id: str, session=Depends(get_cassandra_session)):
@@ -65,7 +74,9 @@ def get_order_repairs(order_id: str, session=Depends(get_cassandra_session)):
         "SELECT order_id, repair_id, customer_name, repair_device, repair_cost, repair_status, repair_eta FROM order_tracking WHERE order_id = %s", (uuid.UUID(order_id),)
     )
     result = [enrich_row(row) for row in rows]
-    # result = [row for row in rows]
-    if not result:
+    closed= [row for row in result if row['repair_status'] == 'Closed']
+    if closed:
+        return {"message": "This order has been closed."}
+    elif not result:
         return {"message": "No repairs found for this order"}
     return result

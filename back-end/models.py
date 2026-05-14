@@ -14,5 +14,5 @@ class OrderTracking(BaseModel):
     repair_cost: Decimal
     repair_start: Optional[datetime] = None
     repair_finish: Optional[datetime] = None
-    repair_status: str = Field(..., pattern=r"^(Picked-up|Work in progress|picking up parts|Finished)$")
+    repair_status: str = Field(..., pattern=r"^(Picked-up|Work in progress|picking up parts|Finished|Closed)$")
     repair_eta: str
