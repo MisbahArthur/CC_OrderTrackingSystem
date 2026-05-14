@@ -16,8 +16,8 @@ export function initTheme() {
 
   const toggle = document.getElementById('themeToggle');
   if (toggle) {
-    toggle.addEventListener('change', (e) => {
-      const next = e.target.checked ? 'dark' : 'light';
+    toggle.addEventListener('click', () => {
+      const next = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
       applyMode(next);
       localStorage.setItem(STORAGE_KEY, next);
     });
@@ -25,19 +25,20 @@ export function initTheme() {
 }
 
 function applyMode(mode) {
-  if (typeof ui !== 'undefined') {
-    ui('mode', mode);
+  if (mode === 'dark') {
+    document.documentElement.classList.add('dark');
   } else {
-    document.body.className = mode;
+    document.documentElement.classList.remove('dark');
   }
+  syncToggle(mode);
 }
 
 function syncToggle(mode) {
   const toggle = document.getElementById('themeToggle');
   if (toggle) {
-    const input = toggle.querySelector('input');
-    if (input) {
-      input.checked = mode === 'dark';
+    const icon = toggle.querySelector('i');
+    if (icon) {
+      icon.className = mode === 'dark' ? 'ph ph-sun text-lg' : 'ph ph-moon text-lg';
     }
   }
 }

@@ -4,81 +4,129 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="google" content="notranslate">
+  <meta name="description" content="Track your device repair order status in real time. Enter your Order ID to check progress and estimated completion.">
   <title>CC Order Tracking</title>
-  <link href="https://cdn.jsdelivr.net/npm/beercss@4.0.21/dist/cdn/beer.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:FILL@0..1&display=swap" rel="stylesheet">
-  <link href="css/style.css" rel="stylesheet">
+  <link rel="preconnect" href="https://cdn.tailwindcss.com">
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    #viewTrace { animation: fadeIn .25s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    #landingError, #traceError { animation: fadeIn .2s ease; }
+    .timeline { position: relative; padding-left: 2rem; }
+    .timeline::before { content: ''; position: absolute; left: .75rem; top: .75rem; bottom: .75rem; width: 2px; border-left: 2px dashed #d1d5db; }
+    .dark .timeline::before { border-color: #52525b; }
+    .timeline-step { position: relative; display: flex; align-items: center; gap: .75rem; padding-bottom: 1.5rem; }
+    .timeline-step:last-child { padding-bottom: 0; }
+    .timeline-icon { position: absolute; left: -2rem; width: 1.5rem; height: 1.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .8rem; flex-shrink: 0; z-index: 1; transition: all .3s ease; }
+    .timeline-icon.completed { background: #0d9488; color: #fff; }
+    .timeline-icon.active { background: #0d9488; color: #fff; box-shadow: 0 0 0 4px rgba(13,148,136,.3); animation: tealPulse 2s infinite; }
+    .timeline-icon.pending { background: #e5e7eb; color: #9ca3af; }
+    .dark .timeline-icon.pending { background: #3f3f46; color: #71717a; }
+    .timeline-label { font-size: .875rem; font-weight: 500; color: #111827; padding-left: .25rem; }
+    .dark .timeline-label { color: #f4f4f5; }
+    .timeline-label.completed { color: #0d9488; font-weight: 600; }
+    .timeline-label.active { color: #111827; font-weight: 600; }
+    .dark .timeline-label.active { color: #f4f4f5; }
+    .timeline-label.pending { color: #9ca3af; }
+    .dark .timeline-label.pending { color: #71717a; }
+    @keyframes tealPulse { 0%,100% { box-shadow: 0 0 0 4px rgba(13,148,136,.3); } 50% { box-shadow: 0 0 0 10px rgba(13,148,136,.1); } }
+    #app::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: url("data:image/svg+xml,%3Csvg%20viewBox%3D%270%200%20200%20200%27%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%3E%3Cfilter%20id%3D%27n%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.65%27%20numOctaves%3D%273%27%20stitchTiles%3D%27stitch%27%2F%3E%3C%2Ffilter%3E%3Crect%20width%3D%27100%25%27%20height%3D%27100%25%27%20filter%3D%27url%28%23n%29%27%2F%3E%3C%2Fsvg%3E") 50% 50% / 200px 200px;
+      opacity: .15;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .dark #app::before {
+      opacity: .08;
+    }
+    #app > main {
+      position: relative;
+      z-index: 1;
+    }
+  </style>
 </head>
-<body class="light">
-  <nav class="top left-align">
-    <h5 class="max">CC Order Tracking</h5>
-    <label class="switch icon" id="themeToggle">
-      <input type="checkbox">
-      <span>
-        <i>dark_mode</i>
-        <i>light_mode</i>
-      </span>
-    </label>
-  </nav>
+<body class="font-['Inter'] bg-zinc-100 dark:bg-zinc-900 flex min-h-dvh items-center justify-center p-4 lg:p-8 transition-colors duration-200">
+  <div id="app" class="max-w-sm lg:max-w-5xl w-full bg-white dark:bg-zinc-800 rounded-[2.5rem] lg:rounded-2xl shadow-md overflow-hidden relative mx-auto">
 
-  <main class="responsive">
-    <div id="viewLanding">
-      <div class="center-align" style="margin-top: 2rem;">
-        <article class="border padding landing-card elevate small-elevate">
-          <div class="center-align">
-            <i class="extra" style="font-size: 3rem; opacity: 0.6;">track_changes</i>
-            <h5>Track Your Repair</h5>
-            <p class="small-text">Enter your order ID to see the current status of your repair.</p>
-          </div>
-          <form id="trackForm">
-            <div class="field label prefix border large">
-              <i>search</i>
-              <input id="orderIdInput" type="text" placeholder=" " required autocomplete="off" spellcheck="false">
-              <label>Order ID</label>
-              <span class="helper">e.g. 550e8400-e29b-41d4-a716-446655440000</span>
-            </div>
-            <div class="margin-top">
-              <button class="primary fill large max" type="submit" id="trackBtn">
-                <i>search</i>
-                <span>Track Order</span>
-              </button>
-            </div>
-          </form>
-          <div id="landingError" class="red-text small-text margin-top" style="display: none;"></div>
-        </article>
+    <!-- Theme Toggle -->
+    <button id="themeToggle" aria-label="Toggle dark mode" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-gray-100 dark:bg-zinc-700 flex items-center justify-center text-gray-500 dark:text-zinc-300 hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors z-10">
+      <i class="ph ph-moon text-lg"></i>
+    </button>
+
+    <main>
+      <!-- Landing View -->
+      <div id="viewLanding" class="p-6 pt-14 mx-auto min-h-[70vh] lg:flex lg:flex-col lg:items-center lg:justify-center">
+      <div class="text-center mb-6">
+        <i class="ph ph-devices text-5xl text-teal-600 mb-3 block"></i>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Track Your Repair</h1>
+        <p class="text-sm text-gray-400 mt-1">Enter your order ID to see the current status of your repair.</p>
       </div>
+      <form id="trackForm">
+        <div class="mb-4">
+          <label for="orderIdInput" class="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">Order ID</label>
+          <input id="orderIdInput" type="text" placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000" required autocomplete="off" spellcheck="false"
+            class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-600 bg-gray-50 dark:bg-zinc-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent transition-colors placeholder:text-gray-400">
+        </div>
+        <button type="submit" id="trackBtn"
+          class="w-full py-3 rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2">
+          <i class="ph ph-magnifying-glass text-lg"></i>
+          <span>Track Order</span>
+        </button>
+      </form>
+      <div id="landingError" class="text-red-500 text-sm mt-3 text-center" style="display: none;"></div>
     </div>
 
+    <!-- Trace View -->
     <div id="viewTrace" style="display: none;">
-      <nav class="left-align margin-bottom">
-        <button class="transparent circle" id="backBtn" type="button">
-          <i>arrow_back</i>
+      <!-- Trace Header -->
+      <div class="flex items-center gap-3 p-4 pt-14 pb-2">
+        <button id="backBtn" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-zinc-700 flex items-center justify-center text-gray-500 dark:text-zinc-300 hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors">
+          <i class="ph ph-arrow-left text-lg"></i>
         </button>
-        <h6 class="max">Order Details</h6>
-      </nav>
-
-      <div id="loadingSpinner" style="display: none;" class="center-align margin-top-large">
-        <progress class="circle indeterminate"></progress>
-        <p class="small-text margin-top">Looking up your order...</p>
+        <h2 class="text-lg font-bold text-gray-900 dark:text-white flex-1">Order Details</h2>
       </div>
 
-      <div id="traceContent" style="display: none;">
+      <!-- Loading -->
+      <div id="loadingSpinner" class="flex flex-col items-center justify-center py-16" style="display: none;">
+        <div class="w-10 h-10 border-4 border-gray-200 dark:border-zinc-600 border-t-teal-600 rounded-full animate-spin"></div>
+        <p class="text-sm text-gray-400 mt-4">Looking up your order...</p>
+      </div>
+
+      <!-- Content -->
+      <div id="traceContent" class="p-4 pt-2" style="display: none;">
         <div id="repairCardsContainer"></div>
       </div>
 
-      <div id="traceError" style="display: none;" class="center-align margin-top-large">
-        <i class="extra" style="font-size: 3rem; opacity: 0.4;">error_outline</i>
-        <p class="margin-top" id="traceErrorMessage">Order not found.</p>
-        <button class="primary border margin-top" id="retryBtn" type="button">
-          <i>refresh</i>
+      <!-- Error -->
+      <div id="traceError" class="flex flex-col items-center justify-center py-16 px-4" style="display: none;">
+        <i class="ph ph-warning-circle text-5xl text-gray-300 dark:text-zinc-600 mb-3"></i>
+        <p class="text-gray-900 dark:text-white font-medium mb-1" id="traceErrorMessage">Order not found.</p>
+        <p class="text-sm text-gray-400 mb-4">Please check your Order ID and try again.</p>
+        <button id="retryBtn"
+          class="px-6 py-2.5 rounded-xl border border-gray-200 dark:border-zinc-600 text-gray-700 dark:text-zinc-300 font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors flex items-center gap-2">
+          <i class="ph ph-arrow-clockwise text-lg"></i>
           <span>Try Again</span>
         </button>
       </div>
     </div>
-  </main>
+    </main>
 
-  <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@4.0.21/dist/cdn/beer.min.js"></script>
-  <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.4/dist/cdn/material-dynamic-colors.min.js"></script>
+  </div>
+
   <script type="module" src="js/theme.js"></script>
   <script type="module" src="js/api.js"></script>
   <script type="module" src="js/stepper.js"></script>

@@ -1,6 +1,6 @@
-import { initTheme } from './theme.js';
 import { fetchOrder } from './api.js';
-import { renderStepper, getStatusMessage } from './stepper.js';
+import { renderStepper } from './stepper.js';
+import { initTheme } from './theme.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -31,39 +31,54 @@ function showTraceLoading() {
 
 function createRepairCard(data) {
   const card = document.createElement('article');
-  card.className = 'border padding elevate small-elevate';
+  card.className = 'bg-white dark:bg-zinc-800 rounded-xl shadow-none border border-gray-100 dark:border-zinc-700 p-5 mb-4';
 
+  const orderId = data.order_id || '—';
+  const repairId = data.repair_id || '—';
+  const customerName = data.customer_name || '—';
+  const device = data.repair_device || '—';
   const cost = data.repair_cost;
   const costDisplay = cost ? `$${parseFloat(cost).toFixed(2)}` : '—';
+  const eta = data.repair_eta || '—';
   const status = data.repair_status_display || data.repair_status;
-  const msg = getStatusMessage(status);
+  const date = data.repair_start
+    ? new Date(data.repair_start).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : '—';
 
   card.innerHTML = `
-    <div class="small-text" style="font-weight:600;margin-bottom:0.5rem;">
-      Repair: ${data.repair_id || '—'}
+    <div class="flex justify-between items-start mb-4">
+      <div>
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Track Order</h2>
+        <p class="text-xs text-gray-400 mt-1">Order ID: ${orderId}</p>
+      </div>
+      <div class="text-lg font-bold text-teal-500">${costDisplay}</div>
     </div>
-    <div class="row">
-      <div class="s12 m6">
-        <div class="small-text">Customer</div>
-        <div class="medium-text">${data.customer_name || '—'}</div>
+    <div class="stepper-container mb-4"></div>
+    <div class="bg-gray-50 dark:bg-zinc-700 rounded-xl p-4">
+      <div class="flex items-center gap-2 mb-3">
+        <i class="ph ph-wrench text-teal-600 text-lg"></i>
+        <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Repair Info</h3>
       </div>
-      <div class="s12 m6">
-        <div class="small-text">Device</div>
-        <div class="medium-text">${data.repair_device || '—'}</div>
+      <div class="space-y-2 text-sm">
+        <div class="font-bold text-gray-900 dark:text-white">${customerName}</div>
+        <div class="flex justify-between">
+          <span class="text-gray-500 dark:text-zinc-400">Repair ID</span>
+          <span class="text-gray-900 dark:text-white font-medium">${repairId}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-500 dark:text-zinc-400">Device</span>
+          <span class="text-gray-900 dark:text-white font-medium">${device}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-500 dark:text-zinc-400">ETA</span>
+          <span class="text-gray-900 dark:text-white font-medium">${eta}</span>
+        </div>
+        <hr class="border-t border-gray-200 dark:border-zinc-600 my-2">
+        <div class="flex justify-between">
+          <span class="text-gray-500 dark:text-zinc-400">Cost</span>
+          <strong class="text-gray-900 dark:text-white font-bold">${costDisplay}</strong>
+        </div>
       </div>
-      <div class="s12 m6">
-        <div class="small-text">Repair Cost</div>
-        <div class="medium-text">${costDisplay}</div>
-      </div>
-      <div class="s12 m6">
-        <div class="small-text">Estimated Time</div>
-        <div class="medium-text">${data.repair_eta || '—'}</div>
-      </div>
-    </div>
-    <div class="margin-top">
-      <h6 class="center-align">Repair Progress</h6>
-      <div class="stepper-container margin-top"></div>
-      <div class="status-message center-align margin-top small-text">${msg}</div>
     </div>
   `;
 
@@ -76,6 +91,7 @@ function createRepairCard(data) {
 function populateOrders(orders) {
   const container = $('repairCardsContainer');
   container.innerHTML = '';
+  container.className = orders.length > 1 ? 'lg:grid lg:grid-cols-2 lg:gap-4' : '';
 
   orders.forEach((data) => {
     const card = createRepairCard(data);
@@ -89,6 +105,7 @@ async function handleTrack(e) {
   const orderId = input.value.trim();
 
   $('landingError').style.display = 'none';
+  history.replaceState(null, '', window.location.pathname);
 
   if (!orderId) {
     $('landingError').textContent = 'Please enter an Order ID.';
@@ -127,6 +144,13 @@ function init() {
   $('orderIdInput').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') form.dispatchEvent(new Event('submit'));
   });
+
+  const params = new URLSearchParams(window.location.search);
+  const orderId = params.get('order_id');
+  if (orderId) {
+    $('orderIdInput').value = orderId;
+    handleTrack(new Event('submit'));
+  }
 
   initTheme();
 }
