@@ -1,8 +1,8 @@
 const STEPS = [
-  { key: 'Picked-up', label: 'Picked-up', icon: 'inventory_2' },
-  { key: 'Picking up parts', label: 'Picking up\nparts', icon: 'handyman' },
-  { key: 'Work in progress', label: 'Work in\nprogress', icon: 'build' },
-  { key: 'Finished', label: 'Finished', icon: 'check_circle' },
+  { key: 'Picked-up', label: 'Picked-up', icon: 'ph-toolbox' },
+  { key: 'Picking up parts', label: 'Picking up parts', icon: 'ph-wrench' },
+  { key: 'Work in progress', label: 'Work in progress', icon: 'ph-gear' },
+  { key: 'Finished', label: 'Finished', icon: 'ph-check-circle' },
 ];
 
 const STATUS_ORDER = {
@@ -23,46 +23,41 @@ export function renderStepper(currentStatus, containerEl) {
 
   const activeIndex = getActiveStepIndex(currentStatus);
 
-  const stepper = document.createElement('div');
-  stepper.className = 'stepper';
+  const timeline = document.createElement('div');
+  timeline.className = 'timeline';
 
   STEPS.forEach((step, index) => {
     const stepEl = document.createElement('div');
-    stepEl.className = 'step';
+    stepEl.className = 'timeline-step';
 
-    const circle = document.createElement('div');
-    circle.className = 'step-circle';
+    const icon = document.createElement('div');
+    icon.className = 'timeline-icon';
+
+    const label = document.createElement('span');
+    label.className = 'timeline-label';
 
     if (index < activeIndex) {
-      stepEl.classList.add('completed');
-      circle.innerHTML = '<i class="material-symbols-outlined">check</i>';
+      icon.classList.add('completed');
+      label.classList.add('completed');
+      icon.innerHTML = '<i class="ph ph-check"></i>';
+      label.textContent = step.label;
     } else if (index === activeIndex) {
-      stepEl.classList.add('active');
-      circle.textContent = String(index + 1);
+      icon.classList.add('active');
+      label.classList.add('active');
+      icon.innerHTML = `<i class="${step.icon}"></i>`;
+      label.textContent = step.label;
     } else {
-      stepEl.classList.add('disabled');
-      circle.textContent = String(index + 1);
+      icon.classList.add('pending');
+      label.classList.add('pending');
+      icon.innerHTML = `<i class="${step.icon}"></i>`;
+      label.textContent = step.label;
     }
 
-    const label = document.createElement('div');
-    label.className = 'step-label';
-    label.textContent = step.label.replace(/\n/g, ' ');
-
-    stepEl.appendChild(circle);
+    stepEl.appendChild(icon);
     stepEl.appendChild(label);
-    stepper.appendChild(stepEl);
+    timeline.appendChild(stepEl);
   });
 
   container.innerHTML = '';
-  container.appendChild(stepper);
-}
-
-export function getStatusMessage(status) {
-  const messages = {
-    'Picked-up': 'Your device has been received and is waiting to be assessed.',
-    'Picking up parts': 'We are sourcing the necessary parts for your repair.',
-    'Work in progress': 'Your repair is currently being worked on.',
-    'Finished': 'Your repair is complete and ready for pickup!',
-  };
-  return messages[status] || '';
+  container.appendChild(timeline);
 }
