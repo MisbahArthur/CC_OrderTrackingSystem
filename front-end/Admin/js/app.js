@@ -1,4 +1,4 @@
-import { apiCreateRepair, apiGetOrders, apiUpdateRepair } from './api.js';
+import { apiCloseRepair, apiCreateRepair, apiGetOrders, apiUpdateRepair } from './api.js';
 import { getStatusDisplay, renderOrders, renderRecentTable, renderStats, shortId, stripHtml } from './render.js';
 import { initTheme, toggleTheme } from './theme.js';
 
@@ -117,7 +117,7 @@ async function handleClose() {
   const r = repairs.find(x => x.repair_id === closingRepairId);
   if (!r) return;
   try {
-    await apiUpdateRepair(r.order_id, closingRepairId, 'Finished');
+    await apiCloseRepair(r.order_id, closingRepairId);
     closeAllDialogs();
     await loadData();
   } catch (e) {

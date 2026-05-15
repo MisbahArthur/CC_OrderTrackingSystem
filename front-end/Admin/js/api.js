@@ -28,3 +28,12 @@ export async function apiUpdateRepair(orderId, repairId, repairStatus, repairCos
   if (!res.ok) throw new Error('HTTP ' + res.status);
   return res.json();
 }
+
+export async function apiCloseRepair(orderId, repairId) {
+  const res = await fetch(API_BASE + `/admin/closeorder/${orderId}?repair_id=${repairId}`, {
+    method: 'PUT',
+    headers: { 'accept': 'application/json' },
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}

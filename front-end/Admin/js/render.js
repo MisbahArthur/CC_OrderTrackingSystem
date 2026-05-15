@@ -34,6 +34,7 @@ const STATUS_OPEN = 'Picked-up';
 const STATUS_IN_PROGRESS = 'Work in progress';
 const STATUS_PARTS = 'Picking up parts';
 const STATUS_FINISHED = 'Finished';
+const STATUS_CLOSED = 'Closed';
 
 function matchStatus(r, value) {
   return (r.repair_status || '') === value || (r.repair_status_display || '') === value;
@@ -49,6 +50,10 @@ function isInProgress(r) {
 
 export function isComplete(r) {
   return matchStatus(r, STATUS_FINISHED);
+}
+
+function isClosed(r) {
+  return matchStatus(r, STATUS_CLOSED);
 }
 
 export function groupByOrder(items) {
@@ -75,12 +80,12 @@ export function actionButtonsHtml(r) {
         <i class="small">edit</i>
         <div class="tooltip">Update</div>
       </button>
-      ${complete ? '' : `
+      ${complete ? `
       <button class="circle transparent small btn-close ripple" data-repair-id="${r.repair_id}">
         <i class="small">check_circle</i>
         <div class="tooltip">Close</div>
       </button>
-      `}
+      ` : ''}
     </div>
   `;
 }
@@ -130,9 +135,10 @@ export function renderFilterChips(repairs, currentFilter) {
   counts.open = repairs.filter(r => isOpen(r)).length;
   counts.progress = repairs.filter(r => isInProgress(r)).length;
   counts.complete = repairs.filter(r => isComplete(r)).length;
+  counts.closed = repairs.filter(r => isClosed(r)).length;
 
-  const categories = { all: 'All', open: 'Open', progress: 'In Progress', complete: 'Completed' };
-  const colors = { all: '', open: 'orange', progress: 'blue', complete: 'green' };
+  const categories = { all: 'All', open: 'Open', progress: 'In Progress', complete: 'Completed', closed: 'Closed' };
+  const colors = { all: '', open: 'orange', progress: 'blue', complete: 'green', closed: 'grey' };
 
   let html = '';
   for (const [key, label] of Object.entries(categories)) {
@@ -162,6 +168,7 @@ export function renderOrders(repairs, currentFilter) {
       if (currentFilter === 'open') return isOpen(r);
       if (currentFilter === 'progress') return isInProgress(r);
       if (currentFilter === 'complete') return isComplete(r);
+      if (currentFilter === 'closed') return isClosed(r);
       return matchStatus(r, currentFilter);
     });
   }

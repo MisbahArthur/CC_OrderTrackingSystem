@@ -79,6 +79,10 @@ body { margin: 0; }
   background-color: #4caf50 !important;
   color: #fff !important;
 }
+.filter-chips .chip.fill.grey {
+  background-color: #9e9e9e !important;
+  color: #fff !important;
+}
 
 .table-actions { display: flex; gap: 4px; justify-content: center; }
 .table-actions button { min-width: unset; width: 36px; height: 36px; position: relative; }
