@@ -16,6 +16,26 @@ export async function apiCreateRepair(data) {
   return res.json();
 }
 
+export async function apiCreateBulkRepairs(data) {
+  const res = await fetch(API_BASE + '/admin/createorders', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+export async function apiAddRepair(orderId, data) {
+  const res = await fetch(API_BASE + `/admin/addrepair/${orderId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
 export async function apiUpdateRepair(orderId, repairId, repairStatus, repairCost, repairEta) {
   const params = new URLSearchParams({ repair_id: repairId });
   if (repairStatus) params.set('repair_status', repairStatus);

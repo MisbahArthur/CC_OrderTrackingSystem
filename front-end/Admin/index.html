@@ -159,43 +159,62 @@
 
   </main>
 
-  <!-- ===== CREATE DIALOG ===== -->
+  <!-- ===== CREATE DIALOG (supports single and bulk) ===== -->
   <dialog id="dialog-create" class="medium">
-    <h5 style="margin: 0;">New Repair</h5>
-    <p class="small-text">All fields are required</p>
+    <h5 style="margin: 0;">New Order</h5>
+    <p class="small-text">Add one or more repairs to the order</p>
     <form class="dialog-form" id="form-create" autocomplete="off">
       <div class="field label border">
         <input type="text" id="create-customer" required>
         <label>Customer Name</label>
       </div>
-      <div class="field label border">
-        <input type="text" id="create-device" required>
-        <label>Device / Repair Description</label>
-      </div>
-      <div class="grid" style="gap:12px;">
-        <div class="s12 m6 field label border max">
-          <input type="number" step="0.01" min="0" id="create-cost" required>
-          <label>Repair Cost ($)</label>
+
+      <div id="repair-rows">
+        <div class="repair-row">
+          <div class="small-text repair-row-label" style="margin-bottom:8px;font-weight:600;">Repair #1</div>
+          <div class="field label border">
+            <input type="text" class="create-device" required>
+            <label>Device / Repair Description</label>
+          </div>
+          <div class="grid" style="gap:12px;">
+            <div class="s12 m6 field label border max">
+              <input type="number" step="0.01" min="0" class="create-cost" required>
+              <label>Repair Cost ($)</label>
+            </div>
+            <div class="s12 m6 field label border max">
+              <input type="text" class="create-eta" required>
+              <label>ETA (e.g. 24h, 3 days)</label>
+            </div>
+          </div>
+          <div class="grid" style="gap:12px;">
+            <div class="s12 m10 field label border max">
+              <select class="create-status">
+                <option value="">— Keep current —</option>
+                <option value="Picked-up">Picked-up</option>
+                <option value="Work in progress">Work in progress</option>
+                <option value="Picking up parts">Picking up parts</option>
+                <option value="Finished">Finished</option>
+              </select>
+              <label>Status</label>
+            </div>
+            <div class="s12 m2" style="display:flex;align-items:flex-end;padding-bottom:4px;">
+              <button class="circle transparent small btn-remove-repair" type="button" style="display:none;" title="Remove repair">
+                <i>close</i>
+              </button>
+            </div>
+          </div>
+          <div class="divider" style="margin:12px 0;"></div>
         </div>
-        <div class="s12 m6 field label border max">
-          <input type="text" id="create-eta" required>
-          <label>ETA (e.g. 24h, 3 days)</label>
-        </div>
       </div>
-      <div class="field label border">
-        <select id="create-status">
-          <option value="">— Keep current —</option>
-          <option value="Picked-up">Picked-up</option>
-          <option value="Work in progress">Work in progress</option>
-          <option value="Picking up parts">Picking up parts</option>
-          <option value="Finished">Finished</option>
-        </select>
-        <label>Initial Status</label>
-      </div>
+
+      <button class="chip small ripple" id="btn-add-repair-row" type="button">
+        <i>add</i>
+        <span>Add another device</span>
+      </button>
     </form>
     <nav>
       <button class="ripple" data-ui="#dialog-create">Cancel</button>
-      <button class="fill ripple" id="btn-create-save">Create Repair</button>
+      <button class="fill ripple" id="btn-create-save">Create Order</button>
     </nav>
   </dialog>
 
@@ -228,6 +247,42 @@
     <nav>
       <button class="ripple" data-ui="#dialog-edit">Cancel</button>
       <button class="fill ripple" id="btn-edit-save">Save Changes</button>
+    </nav>
+  </dialog>
+
+  <!-- ===== ADD REPAIR TO ORDER DIALOG ===== -->
+  <dialog id="dialog-add-repair" class="medium">
+    <h5 style="margin: 0;">Add Repair to Order</h5>
+    <p class="small-text" id="add-repair-order-label">Order: ...</p>
+    <form class="dialog-form" id="form-add-repair" autocomplete="off">
+      <div class="field label border">
+        <input type="text" id="add-repair-device" required>
+        <label>Device / Repair Description</label>
+      </div>
+      <div class="grid" style="gap:12px;">
+        <div class="s12 m6 field label border max">
+          <input type="number" step="0.01" min="0" id="add-repair-cost" required>
+          <label>Repair Cost ($)</label>
+        </div>
+        <div class="s12 m6 field label border max">
+          <input type="text" id="add-repair-eta" required>
+          <label>ETA (e.g. 24h, 3 days)</label>
+        </div>
+      </div>
+      <div class="field label border">
+        <select id="add-repair-status">
+          <option value="">— Keep current —</option>
+          <option value="Picked-up">Picked-up</option>
+          <option value="Work in progress">Work in progress</option>
+          <option value="Picking up parts">Picking up parts</option>
+          <option value="Finished">Finished</option>
+        </select>
+        <label>Initial Status</label>
+      </div>
+    </form>
+    <nav>
+      <button class="ripple" data-ui="#dialog-add-repair">Cancel</button>
+      <button class="fill ripple" id="btn-add-repair-save">Add Repair</button>
     </nav>
   </dialog>
 

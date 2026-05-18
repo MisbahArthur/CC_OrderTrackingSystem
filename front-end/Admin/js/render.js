@@ -202,6 +202,7 @@ export function renderOrders(repairs, currentFilter) {
           <span class="small-text" style="opacity:0.6;margin-left:8px;">${g.customer_name ? stripHtml(g.customer_name) : '(no name)'}</span>
         </div>
         <div class="max"></div>
+        ${g.repairs.every(r => isClosed(r)) ? '' : `<button class="chip small ripple btn-add-repair" data-order-id="${g.order_id}" type="button">+ Add Repair</button>`}
         <span class="chip small ripple">${g.repairs.length} repair${g.repairs.length !== 1 ? 's' : ''}</span>
       </div>
       <div class="order-card-body collapsed">

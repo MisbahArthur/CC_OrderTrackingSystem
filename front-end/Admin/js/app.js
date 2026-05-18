@@ -1,4 +1,4 @@
-import { apiCloseRepair, apiCreateRepair, apiGetOrders, apiUpdateRepair } from './api.js';
+import { apiAddRepair, apiCloseRepair, apiCreateBulkRepairs, apiGetOrders, apiUpdateRepair } from './api.js';
 import { getStatusDisplay, renderOrders, renderRecentTable, renderStats, shortId, stripHtml } from './render.js';
 import { initTheme, toggleTheme } from './theme.js';
 
@@ -6,6 +6,7 @@ let repairs = [];
 let currentView = 'dashboard';
 let editingRepairId = null;
 let closingRepairId = null;
+let addingRepairOrderId = null;
 let currentFilter = 'all';
 
 function showView(view) {
@@ -19,9 +20,19 @@ function showView(view) {
   if (view === 'dashboard') { renderStats(repairs); renderRecentTable(repairs); }
 }
 
+function resetRepairRows() {
+  const container = document.getElementById('repair-rows');
+  const rows = container.querySelectorAll('.repair-row');
+  for (let i = 1; i < rows.length; i++) rows[i].remove();
+  const first = container.querySelector('.repair-row');
+  first.querySelectorAll('input, select').forEach(el => el.value = '');
+  first.querySelector('.btn-remove-repair').style.display = 'none';
+  first.querySelector('.repair-row-label').textContent = 'Repair #1';
+}
+
 function openCreateDialog() {
   document.getElementById('form-create').reset();
-  document.getElementById('create-status').value = '';
+  resetRepairRows();
   editingRepairId = null;
   document.getElementById('dialog-create').showModal();
 }
@@ -50,6 +61,17 @@ function openCloseDialog(repairId) {
   document.getElementById('dialog-close').showModal();
 }
 
+function openAddRepairDialog(orderId) {
+  const order = repairs.find(x => x.order_id === orderId);
+  if (!order) return;
+  addingRepairOrderId = orderId;
+  document.getElementById('form-add-repair').reset();
+  document.getElementById('add-repair-status').value = '';
+  document.getElementById('add-repair-order-label').textContent =
+    'Order: ' + shortId(orderId) + ' — Customer: ' + stripHtml(order.customer_name || '(no name)');
+  document.getElementById('dialog-add-repair').showModal();
+}
+
 function closeAllDialogs() {
   document.querySelectorAll('dialog').forEach(d => d.close());
 }
@@ -67,29 +89,84 @@ function setFilter(filter) {
 
 async function handleCreate() {
   const customer = document.getElementById('create-customer').value.trim();
-  const device = document.getElementById('create-device').value.trim();
-  const cost = document.getElementById('create-cost').value;
-  const eta = document.getElementById('create-eta').value.trim();
-  const status = document.getElementById('create-status').value;
+  if (!customer) { alert('Customer name is required.'); return; }
 
-  if (!customer || !device || !cost || !eta) {
-    alert('All fields are required.');
+  const rows = document.querySelectorAll('.repair-row');
+  const repairs = [];
+  for (const row of rows) {
+    const device = row.querySelector('.create-device').value.trim();
+    const cost = row.querySelector('.create-cost').value;
+    const eta = row.querySelector('.create-eta').value.trim();
+    const status = row.querySelector('.create-status').value;
+    if (!device || !cost || !eta) {
+      alert('All fields are required in each repair row.');
+      return;
+    }
+    repairs.push({
+      repair_device: device,
+      repair_cost: parseFloat(cost),
+      repair_eta: eta,
+      repair_status: status,
+    });
+  }
+
+  try {
+    await apiCreateBulkRepairs({ customer_name: customer, repairs });
+    closeAllDialogs();
+    await loadData();
+  } catch (e) {
+    alert('Failed to create order: ' + e.message);
+  }
+}
+
+async function handleAddRepair() {
+  if (!addingRepairOrderId) return;
+  const device = document.getElementById('add-repair-device').value.trim();
+  const cost = document.getElementById('add-repair-cost').value;
+  const eta = document.getElementById('add-repair-eta').value.trim();
+  const status = document.getElementById('add-repair-status').value;
+
+  if (!device || !cost || !eta) {
+    alert('Device, Cost, and ETA are required.');
     return;
   }
 
   try {
-    await apiCreateRepair({
-      customer_name: customer,
+    await apiAddRepair(addingRepairOrderId, {
       repair_device: device,
       repair_cost: parseFloat(cost),
       repair_eta: eta,
       repair_status: status,
     });
     closeAllDialogs();
+    addingRepairOrderId = null;
     await loadData();
   } catch (e) {
-    alert('Failed to create repair: ' + e.message);
+    alert('Failed to add repair: ' + e.message);
   }
+}
+
+function addRepairRow() {
+  const container = document.getElementById('repair-rows');
+  const template = container.querySelector('.repair-row');
+  const clone = template.cloneNode(true);
+  clone.querySelectorAll('input, select').forEach(el => el.value = '');
+  const num = container.querySelectorAll('.repair-row').length + 1;
+  clone.querySelector('.repair-row-label').textContent = 'Repair #' + num;
+  clone.querySelector('.btn-remove-repair').style.display = '';
+  container.appendChild(clone);
+}
+
+function removeRepairRow(el) {
+  const row = el.closest('.repair-row');
+  row.remove();
+  const container = document.getElementById('repair-rows');
+  const rows = container.querySelectorAll('.repair-row');
+  rows.forEach((r, i) => {
+    r.querySelector('.repair-row-label').textContent = 'Repair #' + (i + 1);
+    const btn = r.querySelector('.btn-remove-repair');
+    btn.style.display = rows.length <= 1 ? 'none' : '';
+  });
 }
 
 async function handleEdit() {
@@ -156,12 +233,22 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-create-save').addEventListener('click', handleCreate);
   document.getElementById('btn-edit-save').addEventListener('click', handleEdit);
   document.getElementById('btn-close-confirm').addEventListener('click', handleClose);
+  document.getElementById('btn-add-repair-save').addEventListener('click', handleAddRepair);
+  document.getElementById('btn-add-repair-row').addEventListener('click', addRepairRow);
+
+  document.getElementById('repair-rows').addEventListener('click', e => {
+    const btn = e.target.closest('.btn-remove-repair');
+    if (btn) removeRepairRow(btn);
+  });
 
   document.getElementById('form-create').addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); handleCreate(); }
   });
   document.getElementById('form-edit').addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); handleEdit(); }
+  });
+  document.getElementById('form-add-repair').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); handleAddRepair(); }
   });
 
   document.getElementById('search-input').addEventListener('input', () => {
@@ -177,6 +264,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('order-groups').addEventListener('click', e => {
+    const addBtn = e.target.closest('.btn-add-repair');
+    if (addBtn) {
+      openAddRepairDialog(addBtn.dataset.orderId);
+      return;
+    }
     const btn = e.target.closest('[data-repair-id]');
     if (btn) {
       if (btn.classList.contains('btn-edit')) openEditDialog(btn.dataset.repairId);
