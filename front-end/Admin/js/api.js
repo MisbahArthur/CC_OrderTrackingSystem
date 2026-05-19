@@ -6,15 +6,15 @@ export async function apiGetOrders() {
   return res.json();
 }
 
-export async function apiCreateRepair(data) {
-  const res = await fetch(API_BASE + '/admin/createorder', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  return res.json();
-}
+// export async function apiCreateRepair(data) {
+//   const res = await fetch(API_BASE + '/admin/createorder', {
+//     method: 'POST',
+//     headers: { 'Content-Type': 'application/json' },
+//     body: JSON.stringify(data),
+//   });
+//   if (!res.ok) throw new Error('HTTP ' + res.status);
+//   return res.json();
+// }
 
 export async function apiCreateBulkRepairs(data) {
   const res = await fetch(API_BASE + '/admin/createorders', {
