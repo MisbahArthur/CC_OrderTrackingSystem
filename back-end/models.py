@@ -3,8 +3,6 @@ from datetime import datetime
 from decimal import Decimal
 from pydantic import BaseModel, Field
 
-
-
 class RepairItem(BaseModel):
     repair_device: str
     repair_cost: Decimal

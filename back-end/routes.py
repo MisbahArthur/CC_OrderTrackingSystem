@@ -13,6 +13,7 @@ router = APIRouter()
 def read_root():
     return {"message": "Welcome to the Order Tracking System API!"}
 
+
 # Admin endpoints
 @router.get("/admin/vieworders")
 def get_orders(session=Depends(get_cassandra_session)):
@@ -46,26 +47,6 @@ def update_order(order_id: str, repair_id: str, repair_status: Optional[str] = N
         )
     return {"message": f"Order {order_id} repair {repair_id} updated"}
 
-@router.post("/admin/createorder")
-def create_order(order: OrderTracking, session=Depends(get_cassandra_session)):
-    
-    new_order_id = uuid.uuid4()
-    new_repair_id = uuid.uuid1()
-    creation_time = uuid.uuid1()
-    current_time = datetime.datetime.now()
-
-    query = """
-        INSERT INTO order_tracking (order_id, repair_id, customer_name, repair_device, order_creation, repair_cost, repair_start, repair_finish, repair_status, repair_eta) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """
-    session.execute(query, (new_order_id, new_repair_id, order.customer_name, order.repair_device, creation_time, order.repair_cost, current_time, None, order.repair_status, order.repair_eta))
-
-    return {
-        "message": "Order created successfully",
-        "order_id": str(new_order_id),
-        "repair_id": str(new_repair_id)
-    }
-
-
 @router.post("/admin/createorders")
 def create_orders_bulk(order: BulkOrderCreate, session=Depends(get_cassandra_session)):
     new_order_id = uuid.uuid4()
@@ -87,7 +68,6 @@ def create_orders_bulk(order: BulkOrderCreate, session=Depends(get_cassandra_ses
         "order_id": str(new_order_id),
         "repair_ids": repair_ids
     }
-
 
 @router.post("/admin/addrepair/{order_id}")
 def add_repair(order_id: str, repair: AddRepairRequest, session=Depends(get_cassandra_session)):
@@ -120,6 +100,7 @@ def close_order(order_id: str, repair_id: str, session=Depends(get_cassandra_ses
         ("Closed", current_time, uuid.UUID(order_id), uuid.UUID(repair_id))
     )
     return {"message": f"Order {order_id} repair {repair_id} has been successfully closed"}
+
 
 # customer endpoints
 @router.get("/customer/vieworders/{order_id}")
