@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Frontend Documentation — CC Order Tracking System</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f8f9fa;
+    --sidebar: #1e293b;
+    --sidebar-text: #cbd5e1;
+    --sidebar-active: #38bdf8;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --code-bg: #1e293b;
+    --code-text: #e2e8f0;
+    --green: #059669;
+    --orange: #d97706;
+    --red: #dc2626;
+    --radius: 8px;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    background: var(--sidebar);
+    color: var(--sidebar-text);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 1.5rem 0;
+  }
+  .sidebar h2 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0 1.25rem;
+    margin-bottom: 0.75rem;
+    color: #64748b;
+  }
+  .sidebar nav a {
+    display: block;
+    padding: 0.45rem 1.25rem;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    font-size: 0.875rem;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  .sidebar nav a:hover, .sidebar nav a:focus {
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+  }
+  .sidebar nav a.active { border-left-color: var(--sidebar-active); color: #fff; }
+  .sidebar nav .section-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 1rem 1.25rem 0.3rem;
+    color: #475569;
+    font-weight: 600;
+  }
+
+  /* Main */
+  .main { flex: 1; max-width: 960px; padding: 3rem 2.5rem; }
+  .main h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem; }
+  .main .subtitle { color: var(--text-muted); font-size: 1.05rem; margin-bottom: 2rem; }
+  .main h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 2.5rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border);
+  }
+  .main h3 { font-size: 1.1rem; font-weight: 600; margin: 1.5rem 0 0.75rem; }
+  .main p { margin-bottom: 1rem; color: #334155; }
+  .main ul, .main ol { margin-bottom: 1rem; padding-left: 1.5rem; color: #334155; }
+  .main li { margin-bottom: 0.3rem; }
+  .main a { color: var(--accent); text-decoration: none; }
+  .main a:hover { text-decoration: underline; }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .card-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; }
+
+  /* Code */
+  code {
+    font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+    font-size: 0.85em;
+  }
+  p code, li code {
+    background: #f1f5f9;
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    color: var(--red);
+  }
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: #f1f5f9;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+  }
+  tr:last-child td { border-bottom: none; }
+
+  /* Tags */
+  .tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .tag-get { background: #dbeafe; color: #1d4ed8; }
+  .tag-post { background: #d1fae5; color: #065f46; }
+  .tag-put { background: #fef3c7; color: #92400e; }
+
+  /* Badge */
+  .badge { display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.45rem; border-radius: 4px; }
+  .badge-yes { background: #d1fae5; color: #065f46; }
+  .badge-no { background: #fee2e2; color: #991b1b; }
+
+  .method-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    min-width: 48px;
+    text-align: center;
+  }
+  .method-GET { background: #dbeafe; color: #1d4ed8; }
+  .method-POST { background: #d1fae5; color: #065f46; }
+  .method-PUT { background: #fef3c7; color: #92400e; }
+
+  .endpoint-block {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .endpoint-block h4 { font-size: 1rem; margin-bottom: 0.5rem; }
+  .endpoint-block .meta { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+
+  /* Mobile nav */
+  .mobile-nav { display: none; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    body { flex-direction: column; }
+    .sidebar { display: none; }
+    .mobile-nav { display: block; width: 100%; }
+    .mobile-nav summary {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .mobile-nav nav {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1rem 1rem;
+    }
+    .mobile-nav nav a {
+      display: block;
+      padding: 0.5rem 0.75rem;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.875rem;
+      border-radius: var(--radius);
+    }
+    .mobile-nav nav a:hover { background: var(--accent-light); }
+    .main { padding: 1.5rem; max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <h2>Documentation</h2>
+  <nav>
+    <div class="section-label">Admin Frontend</div>
+    <a href="#overview">Overview</a>
+    <a href="#structure">Project Structure</a>
+    <a href="#getting-started">Getting Started</a>
+    <a href="#architecture">Architecture</a>
+
+    <div class="section-label">Modules</div>
+    <a href="#module-api">api.js</a>
+    <a href="#module-app">app.js</a>
+    <a href="#module-render">render.js</a>
+    <a href="#module-theme">theme.js</a>
+
+    <div class="section-label">Reference</div>
+    <a href="#views">Views</a>
+    <a href="#dialogs">Dialogs</a>
+    <a href="#api-contract">API Contract</a>
+    <a href="#status-system">Status System</a>
+    <a href="#data-flow">Data Flow</a>
+    <a href="#customization">Customization</a>
+  </nav>
+</aside>
+
+<details class="mobile-nav">
+  <summary>Admin Frontend Docs</summary>
+  <nav>
+    <a href="#overview">Overview</a>
+    <a href="#structure">Project Structure</a>
+    <a href="#getting-started">Getting Started</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#module-api">api.js</a>
+    <a href="#module-app">app.js</a>
+    <a href="#module-render">render.js</a>
+    <a href="#module-theme">theme.js</a>
+    <a href="#views">Views</a>
+    <a href="#dialogs">Dialogs</a>
+    <a href="#api-contract">API Contract</a>
+    <a href="#status-system">Status System</a>
+    <a href="#data-flow">Data Flow</a>
+    <a href="#customization">Customization</a>
+  </nav>
+</details>
+
+<div class="main">
+
+<h1>CC Order Tracking System &mdash; Admin Frontend</h1>
+<p class="subtitle">Administrative dashboard for managing computer repair orders.</p>
+
+<!-- ==================== OVERVIEW ==================== -->
+<h2 id="overview">Overview</h2>
+<p>
+  The <strong>Admin Frontend</strong> is a static single-page application that provides an administrative dashboard for managing computer repair orders. Admins can create orders, add repairs, update statuses and costs, and close completed repairs &mdash; all from a single interface.
+</p>
+<p>
+  Built with <strong>vanilla JavaScript</strong> (ES modules), <strong>BeerCSS 4.0</strong> (Material Design 3 CSS framework), <strong>Material Icons</strong>, and <strong>Material Dynamic Colors</strong> (Material You theming). No build step, bundler, or framework required.
+</p>
+
+<!-- ==================== PROJECT STRUCTURE ==================== -->
+<h2 id="structure">Project Structure</h2>
+<pre><code>front-end/Admin/
+  index.html          # Main entry — all markup, dialogs, and inline CSS
+  favicon.ico
+  css/                # Reserved for custom styles (currently empty)
+  js/
+    api.js            # HTTP client — talks to the backend API
+    app.js            # Core app logic — views, events, state, CRUD handlers
+    render.js         # DOM rendering and utility functions
+    theme.js          # Dark / light theme toggle via BeerCSS</code></pre>
+
+<table>
+  <thead><tr><th>File</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><code>index.html</code></td><td>Single HTML entry with all markup, inline CSS, and dialog templates.</td></tr>
+    <tr><td><code>js/api.js</code></td><td>HTTP client module for all backend API communication.</td></tr>
+    <tr><td><code>js/app.js</code></td><td>Main controller — state management, view switching, event binding, CRUD handlers.</td></tr>
+    <tr><td><code>js/render.js</code></td><td>DOM rendering functions: stats, tables, order groups, filter chips, utilities.</td></tr>
+    <tr><td><code>js/theme.js</code></td><td>Dark/light/auto theme management via BeerCSS theming API.</td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== GETTING STARTED ==================== -->
+<h2 id="getting-started">Getting Started</h2>
+
+<h3>Prerequisites</h3>
+<ul>
+  <li>Any static file server (e.g. <code>npx serve</code>, <code>python3 -m http.server</code>)</li>
+  <li>Backend running at <code>http://localhost:8000</code> (configurable in <code>js/api.js</code>)</li>
+</ul>
+
+<h3>Setup</h3>
+<ol>
+  <li>
+    <strong>Serve the directory</strong>
+    <pre><code>npx serve front-end/Admin/
+# or
+python3 -m http.server 8080 --directory front-end/Admin/</code></pre>
+  </li>
+  <li>
+    <strong>Ensure the backend is running</strong> on <code>http://localhost:8000</code>.
+  </li>
+  <li>
+    <strong>Open</strong> <code>http://localhost:8080</code> in a browser.
+  </li>
+</ol>
+<p>The app requires no build step. Just serve the static files.</p>
+
+<!-- ==================== ARCHITECTURE ==================== -->
+<h2 id="architecture">Architecture</h2>
+<p>The app has <strong>two views</strong> and <strong>four dialog modals</strong>, all managed by <code>app.js</code>:</p>
+
+<h3>Views</h3>
+<table>
+  <thead><tr><th>View</th><th>Element ID</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td>Dashboard</td><td><code>#view-dashboard</code></td><td>Stat cards (Total / Open / In Progress / Completed) + Recent Repairs table</td></tr>
+    <tr><td>Orders</td><td><code>#view-orders</code></td><td>Search bar, filter chips, accordion-style order groups with repair tables</td></tr>
+  </tbody>
+</table>
+
+<h3>Dialogs</h3>
+<table>
+  <thead><tr><th>Dialog</th><th>Element ID</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td>New Order</td><td><code>#dialog-create</code></td><td>Create order with one or more repairs (bulk create)</td></tr>
+    <tr><td>Edit Repair</td><td><code>#dialog-edit</code></td><td>Update cost, ETA, or status for a single repair</td></tr>
+    <tr><td>Add Repair</td><td><code>#dialog-add-repair</code></td><td>Add a new repair to an existing order</td></tr>
+    <tr><td>Close Repair</td><td><code>#dialog-close</code></td><td>Confirm and close a finished repair</td></tr>
+  </tbody>
+</table>
+
+<h3>Data Flow</h3>
+<pre><code>Page Load (DOMContentLoaded)
+        |
+        v
+  app.js initTheme() + bindEvents() -> loadData()
+        |
+        v
+  api.js apiGetOrders() -> GET /admin/vieworders
+        |
+        v
+  Response (JSON array of repairs)
+        |
+        v
+  render.js renderStats() -> stat card values
+  render.js renderRecentTable() -> recent repairs table
+  render.js renderOrders() -> accordion order groups
+        |
+        v
+  User interacts (edit / add / close / create)
+        |
+        v
+  app.js handler -> api.js -> re-render via loadData()</code></pre>
+
+<!-- ==================== MODULE: API.JS ==================== -->
+<h2 id="module-api">Module: <code>api.js</code></h2>
+<p>API service layer &mdash; all HTTP communication with the backend.</p>
+
+<h3>Configuration</h3>
+<pre><code>export const API_BASE = 'http://localhost:8000';</code></pre>
+<p>Change this to point to the production backend URL.</p>
+
+<h3>Functions</h3>
+<table>
+  <thead><tr><th>Function</th><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>apiGetOrders()</code></td><td><span class="method-badge method-GET">GET</span></td><td><code>/admin/vieworders</code></td><td>Fetch all orders and repairs</td></tr>
+    <tr><td><code>apiCreateBulkRepairs(data)</code></td><td><span class="method-badge method-POST">POST</span></td><td><code>/admin/createorders</code></td><td>Create an order with one or more repairs</td></tr>
+    <tr><td><code>apiAddRepair(orderId, data)</code></td><td><span class="method-badge method-POST">POST</span></td><td><code>/admin/addrepair/{order_id}</code></td><td>Add a repair to an existing order</td></tr>
+    <tr><td><code>apiUpdateRepair(orderId, repairId, status, cost, eta)</code></td><td><span class="method-badge method-PUT">PUT</span></td><td><code>/admin/updateorder/{order_id}</code></td><td>Update a repair's status, cost, or ETA</td></tr>
+    <tr><td><code>apiCloseRepair(orderId, repairId)</code></td><td><span class="method-badge method-PUT">PUT</span></td><td><code>/admin/closeorder/{order_id}</code></td><td>Mark a repair as Closed</td></tr>
+  </tbody>
+</table>
+
+<h3>Usage Example</h3>
+<pre><code>import { apiGetOrders, apiCreateBulkRepairs } from './api.js';
+
+// Fetch all repairs
+const repairs = await apiGetOrders();
+
+// Create a new order with 2 repairs
+await apiCreateBulkRepairs({
+  customer_name: 'Jane Doe',
+  repairs: [
+    { repair_device: 'iPhone 15', repair_cost: 199.99, repair_eta: '2 days', repair_status: 'Picked-up' },
+    { repair_device: 'MacBook Air', repair_cost: 349.99, repair_eta: '5 days', repair_status: 'Picked-up' },
+  ],
+});</code></pre>
+
+<!-- ==================== MODULE: APP.JS ==================== -->
+<h2 id="module-app">Module: <code>app.js</code></h2>
+<p>Main controller &mdash; manages application state, view switching, event binding, and CRUD operations.</p>
+
+<h3>State Variables</h3>
+<table>
+  <thead><tr><th>Variable</th><th>Type</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><code>repairs</code></td><td><code>Array</code></td><td>All repair records fetched from the API</td></tr>
+    <tr><td><code>currentView</code></td><td><code>string</code></td><td><code>'dashboard'</code> or <code>'orders'</code></td></tr>
+    <tr><td><code>editingRepairId</code></td><td><code>string|null</code></td><td>Repair ID currently being edited</td></tr>
+    <tr><td><code>closingRepairId</code></td><td><code>string|null</code></td><td>Repair ID being closed</td></tr>
+    <tr><td><code>addingRepairOrderId</code></td><td><code>string|null</code></td><td>Order ID for adding a repair</td></tr>
+    <tr><td><code>currentFilter</code></td><td><code>string</code></td><td>Active filter: <code>'all'</code>, <code>'open'</code>, <code>'progress'</code>, <code>'complete'</code>, or <code>'closed'</code></td></tr>
+  </tbody>
+</table>
+
+<h3>Key Functions</h3>
+<table>
+  <thead><tr><th>Function</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>showView(view)</code></td><td>Switches between dashboard and orders views, triggers corresponding renders</td></tr>
+    <tr><td><code>openCreateDialog()</code></td><td>Resets and opens the New Order dialog</td></tr>
+    <tr><td><code>openEditDialog(repairId)</code></td><td>Populates and opens the Edit Repair dialog for a specific repair</td></tr>
+    <tr><td><code>openCloseDialog(repairId)</code></td><td>Shows close confirmation with repair details</td></tr>
+    <tr><td><code>openAddRepairDialog(orderId)</code></td><td>Opens the Add Repair dialog for a specific order</td></tr>
+    <tr><td><code>addRepairRow()</code></td><td>Duplicates a repair row in the New Order form (bulk create)</td></tr>
+    <tr><td><code>removeRepairRow(el)</code></td><td>Removes a repair row and renumbers remaining rows</td></tr>
+    <tr><td><code>handleCreate()</code></td><td>Validates and submits the new order form (POST)</td></tr>
+    <tr><td><code>handleEdit()</code></td><td>Validates and submits the edit repair form (PUT)</td></tr>
+    <tr><td><code>handleClose()</code></td><td>Submits the close repair request (PUT)</td></tr>
+    <tr><td><code>handleAddRepair()</code></td><td>Validates and submits add repair form (POST)</td></tr>
+    <tr><td><code>setFilter(filter)</code></td><td>Updates the current filter and re-renders orders</td></tr>
+    <tr><td><code>toggleOrderGroup(header)</code></td><td>Collapses / expands an accordion order card</td></tr>
+    <tr><td><code>loadData()</code></td><td>Fetches all repairs and re-renders everything</td></tr>
+  </tbody>
+</table>
+
+<h3>Event Flow</h3>
+<pre><code>DOMContentLoaded
+  +-- initTheme() from theme.js
+  +-- Bind nav clicks -> showView()
+  +-- Bind "New Repair" buttons -> openCreateDialog()
+  +-- Bind Theme buttons -> toggleTheme()
+  +-- Bind dialog saves -> handleCreate / handleEdit / handleClose / handleAddRepair
+  +-- Bind "Add Repair Row" -> addRepairRow()
+  +-- Bind "Remove Repair" (delegated) -> removeRepairRow()
+  +-- Bind Enter key on forms -> respective handlers
+  +-- Bind search input (debounced 250ms) -> renderOrders()
+  +-- Bind action buttons (edit/close) via delegation on:
+  |     +-- #recent-table-body -> openEditDialog / openCloseDialog
+  |     +-- #order-groups -> openAddRepairDialog / openEditDialog / openCloseDialog / toggleOrderGroup
+  +-- Bind filter chips via delegation -> setFilter()
+  +-- loadData() -> fetch & render</code></pre>
+
+<!-- ==================== MODULE: RENDER.JS ==================== -->
+<h2 id="module-render">Module: <code>render.js</code></h2>
+<p>All DOM rendering and utility functions for the UI.</p>
+
+<h3>Utility Functions</h3>
+<table>
+  <thead><tr><th>Function</th><th>Returns</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>shortId(uuid)</code></td><td><code>string</code></td><td>First 8 characters of a UUID, or <code>&mdash;</code></td></tr>
+    <tr><td><code>formatCurrency(v)</code></td><td><code>string</code></td><td>Formats a number as <code>$XX.XX</code>, or <code>&mdash;</code></td></tr>
+    <tr><td><code>formatDate(d)</code></td><td><code>string</code></td><td>Locale-friendly date/time string, or <code>&mdash;</code></td></tr>
+    <tr><td><code>getStatusColor(status, display)</code></td><td><code>string</code></td><td>Maps status to a CSS color class (<code>green</code>, <code>blue</code>, <code>orange</code>, <code>purple</code>, <code>grey</code>)</td></tr>
+    <tr><td><code>getStatusDisplay(repair)</code></td><td><code>string</code></td><td>Returns <code>repair_status_display</code> or <code>repair_status</code></td></tr>
+    <tr><td><code>isComplete(r)</code></td><td><code>boolean</code></td><td>Checks if status is <code>Finished</code></td></tr>
+    <tr><td><code>groupByOrder(items)</code></td><td><code>Array</code></td><td>Groups repairs into <code>{ order_id, customer_name, repairs[] }</code> objects</td></tr>
+    <tr><td><code>stripHtml(s)</code></td><td><code>string</code></td><td>Safe text escaping via DOM textContent/innerHTML</td></tr>
+    <tr><td><code>actionButtonsHtml(r)</code></td><td><code>string</code></td><td>Edit and Close button markup for a repair row</td></tr>
+  </tbody>
+</table>
+
+<h3>Render Functions</h3>
+<table>
+  <thead><tr><th>Function</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>renderStats(repairs)</code></td><td>Updates the 4 stat cards (Total, Open, In Progress, Completed)</td></tr>
+    <tr><td><code>renderRecentTable(repairs)</code></td><td>Renders the 5 most recent repairs in a table sorted by finish/creation date</td></tr>
+    <tr><td><code>renderFilterChips(repairs, currentFilter)</code></td><td>Renders the 5 filter chips with counts (All, Open, In Progress, Completed, Closed)</td></tr>
+    <tr><td><code>renderOrders(repairs, currentFilter)</code></td><td>Applies filter + search, groups by order, renders accordion-style order cards</td></tr>
+  </tbody>
+</table>
+
+<h3>Status Predicates</h3>
+<table>
+  <thead><tr><th>Function</th><th>Matches</th></tr></thead>
+  <tbody>
+    <tr><td><code>isOpen(r)</code></td><td><code>Picked-up</code></td></tr>
+    <tr><td><code>isInProgress(r)</code></td><td><code>Work in progress</code> or <code>Picking up parts</code></td></tr>
+    <tr><td><code>isComplete(r)</code></td><td><code>Finished</code></td></tr>
+    <tr><td><code>isClosed(r)</code></td><td><code>Closed</code></td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== MODULE: THEME.JS ==================== -->
+<h2 id="module-theme">Module: <code>theme.js</code></h2>
+<p>Manages dark/light/auto theme mode using BeerCSS's built-in theming API with Material Dynamic Colors.</p>
+
+<h3>Exports</h3>
+<table>
+  <thead><tr><th>Export</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>initTheme()</code></td><td>Initialises the theme in <code>'auto'</code> mode with primary colour <code>#f3d998</code></td></tr>
+    <tr><td><code>toggleTheme()</code></td><td>Toggles between <code>'dark'</code> and <code>'light'</code> modes</td></tr>
+  </tbody>
+</table>
+
+<h3>Behaviour</h3>
+<ol>
+  <li><code>initTheme()</code> calls BeerCSS <code>ui('mode', 'auto')</code> &mdash; follows system preference initially.</li>
+  <li>Primary theme colour is <code>#f3d998</code> (warm amber/yellow), passed to Material Dynamic Colors.</li>
+  <li><code>toggleTheme()</code> flips between <code>'dark'</code> and <code>'light'</code> via BeerCSS's <code>ui('mode', ...)</code>.</li>
+  <li>The toggle icon updates between <code>dark_mode</code> and <code>light_mode</code> Material Icons on both sidebar and bottom nav buttons.</li>
+</ol>
+
+<!-- ==================== VIEWS ==================== -->
+<h2 id="views">Views</h2>
+
+<h3>Dashboard</h3>
+<p>The landing view showing a high-level overview of all repairs:</p>
+<ul>
+  <li><strong>4 Stat Cards</strong> &mdash; Total Repairs, Open / In Queue (<code>orange</code>), In Progress (<code>blue</code>), Completed (<code>green</code>). Each card has a Material Icon and colour-coded icon wrap.</li>
+  <li><strong>Recent Repairs Table</strong> &mdash; The 5 most recent repairs sorted by finish date (then creation date). Shows Customer, Device, Cost, Status (colour chip), ETA, and Action buttons (Edit / Close).</li>
+  <li><strong>Last updated</strong> timestamp below the heading.</li>
+  <li><strong>View All</strong> button navigates to the Orders view.</li>
+</ul>
+
+<h3>Orders</h3>
+<p>The full order management view:</p>
+<ul>
+  <li><strong>Search bar</strong> &mdash; Filters repairs in real-time (debounced 250ms) by customer name, device, repair ID, order ID, or status.</li>
+  <li><strong>Filter chips</strong> &mdash; 5 chips (All, Open, In Progress, Completed, Closed) with live counts. Selected chip has a filled colour.</li>
+  <li><strong>Order groups</strong> &mdash; Repairs grouped by <code>order_id</code> in accordion-style cards. Each header shows the short order ID, customer name, repair count, and an "Add Repair" button (hidden if all repairs are Closed). Clicking the header toggles the table body.</li>
+  <li><strong>Repair table</strong> &mdash; Columns: Repair ID (short), Customer, Device, Cost, Status (colour chip), ETA, Start, Finish, Actions (Edit / Close).</li>
+  <li><strong>Empty state</strong> &mdash; Shown when no repairs match the current filter or search.</li>
+</ul>
+
+<!-- ==================== DIALOGS ==================== -->
+<h2 id="dialogs">Dialogs</h2>
+
+<h3>New Order (<code>#dialog-create</code>)</h3>
+<p>Creates an order with one or more repairs in a single submission.</p>
+<table>
+  <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>Customer Name</td><td><code>text</code></td><td>Yes</td><td>Top-level, shared by all repairs in the order</td></tr>
+    <tr><td>Device / Description</td><td><code>text</code></td><td>Yes</td><td>Per repair row</td></tr>
+    <tr><td>Repair Cost ($)</td><td><code>number</code></td><td>Yes</td><td>Step 0.01, min 0</td></tr>
+    <tr><td>ETA</td><td><code>text</code></td><td>Yes</td><td>e.g. "24h", "3 days"</td></tr>
+    <tr><td>Status</td><td><code>select</code></td><td>No</td><td>Options: Picked-up, Work in progress, Picking up parts, Finished</td></tr>
+  </tbody>
+</table>
+<p>Multiple repair rows can be added with the "Add another device" button. Rows can be removed with the close button (hidden when only 1 row remains).</p>
+
+<h3>Edit Repair (<code>#dialog-edit</code>)</h3>
+<p>Updates an existing repair. All fields are optional &mdash; only filled fields are sent.</p>
+<table>
+  <thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>Repair Cost ($)</td><td><code>number</code></td><td>Step 0.01, min 0</td></tr>
+    <tr><td>ETA</td><td><code>text</code></td><td></td></tr>
+    <tr><td>Status</td><td><code>select</code></td><td>Options include "&mdash; Keep current &mdash;" (default)</td></tr>
+  </tbody>
+</table>
+
+<h3>Add Repair (<code>#dialog-add-repair</code>)</h3>
+<p>Adds a new repair to an existing order. Shows the order ID and customer name in the subtitle.</p>
+<table>
+  <thead><tr><th>Field</th><th>Type</th><th>Required</th></tr></thead>
+  <tbody>
+    <tr><td>Device / Description</td><td><code>text</code></td><td>Yes</td></tr>
+    <tr><td>Repair Cost ($)</td><td><code>number</code></td><td>Yes</td></tr>
+    <tr><td>ETA</td><td><code>text</code></td><td>Yes</td></tr>
+    <tr><td>Initial Status</td><td><code>select</code></td><td>No</td></tr>
+  </tbody>
+</table>
+
+<h3>Close Repair (<code>#dialog-close</code>)</h3>
+<p>Confirmation dialog before closing a completed repair. Displays the Device, Customer, and Current Status for verification.</p>
+<table>
+  <thead><tr><th>Element</th><th>Content</th></tr></thead>
+  <tbody>
+    <tr><td>Title</td><td>"Close Repair"</td></tr>
+    <tr><td>Message</td><td>"Close repair {shortId}?"</td></tr>
+    <tr><td>Details</td><td>Device, Customer, Current Status</td></tr>
+    <tr><td>Confirm button</td><td>Green "Confirm Close"</td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== API CONTRACT ==================== -->
+<h2 id="api-contract">API Contract</h2>
+<p>All endpoints are relative to <code>http://localhost:8000</code> (configurable).</p>
+
+<h3><span class="method-badge method-GET">GET</span> <code>/admin/vieworders</code></h3>
+<table>
+  <thead><tr><th>Attribute</th><th>Details</th></tr></thead>
+  <tbody>
+    <tr><td>Method</td><td><code>GET</code></td></tr>
+    <tr><td>URL</td><td><code>/admin/vieworders</code></td></tr>
+    <tr><td>Auth</td><td>None (internal)</td></tr>
+    <tr><td>Headers</td><td><code>Accept: application/json</code></td></tr>
+  </tbody>
+</table>
+<p>Returns a JSON array of all repair objects.</p>
+
+<h3><span class="method-badge method-POST">POST</span> <code>/admin/createorders</code></h3>
+<table>
+  <thead><tr><th>Attribute</th><th>Details</th></tr></thead>
+  <tbody>
+    <tr><td>Method</td><td><code>POST</code></td></tr>
+    <tr><td>URL</td><td><code>/admin/createorders</code></td></tr>
+    <tr><td>Content-Type</td><td><code>application/json</code></td></tr>
+  </tbody>
+</table>
+<p>Request body:</p>
+<pre><code>{
+  "customer_name": "Jane Doe",
+  "repairs": [
+    {
+      "repair_device": "iPhone 15",
+      "repair_cost": 199.99,
+      "repair_eta": "2 days",
+      "repair_status": "Picked-up"
+    }
+  ]
+}</code></pre>
+
+<h3><span class="method-badge method-POST">POST</span> <code>/admin/addrepair/{order_id}</code></h3>
+<table>
+  <thead><tr><th>Attribute</th><th>Details</th></tr></thead>
+  <tbody>
+    <tr><td>Method</td><td><code>POST</code></td></tr>
+    <tr><td>URL</td><td><code>/admin/addrepair/{order_id}</code></td></tr>
+    <tr><td>Path param</td><td><code>order_id</code> &mdash; UUID string</td></tr>
+    <tr><td>Content-Type</td><td><code>application/json</code></td></tr>
+  </tbody>
+</table>
+<p>Request body (same repair object shape as above, without <code>customer_name</code>).</p>
+
+<h3><span class="method-badge method-PUT">PUT</span> <code>/admin/updateorder/{order_id}</code></h3>
+<table>
+  <thead><tr><th>Attribute</th><th>Details</th></tr></thead>
+  <tbody>
+    <tr><td>Method</td><td><code>PUT</code></td></tr>
+    <tr><td>URL</td><td><code>/admin/updateorder/{order_id}?repair_id=...&amp;repair_status=...&amp;repair_cost=...&amp;repair_eta=...</code></td></tr>
+    <tr><td>Query params</td><td><code>repair_id</code> (required), <code>repair_status</code>, <code>repair_cost</code>, <code>repair_eta</code> (optional)</td></tr>
+  </tbody>
+</table>
+
+<h3><span class="method-badge method-PUT">PUT</span> <code>/admin/closeorder/{order_id}</code></h3>
+<table>
+  <thead><tr><th>Attribute</th><th>Details</th></tr></thead>
+  <tbody>
+    <tr><td>Method</td><td><code>PUT</code></td></tr>
+    <tr><td>URL</td><td><code>/admin/closeorder/{order_id}?repair_id=...</code></td></tr>
+    <tr><td>Query params</td><td><code>repair_id</code> (required)</td></tr>
+  </tbody>
+</table>
+
+<h3>Response Format</h3>
+<p>All endpoints return a JSON array of repair objects on success:</p>
+<pre><code>[
+  {
+    "order_id": "550e8400-e29b-41d4-a716-446655440000",
+    "repair_id": "660e8400-e29b-41d4-a716-446655440001",
+    "customer_name": "John Doe",
+    "repair_device": "MacBook Pro 14",
+    "repair_cost": 249.99,
+    "repair_status": "Work in progress",
+    "repair_status_display": "Work in progress",
+    "repair_eta": "2026-05-20",
+    "repair_start": "2026-05-15T10:00:00",
+    "repair_finish": null,
+    "order_creation": "2026-05-15T10:00:00",
+    "actual_hours": null,
+    "estimated_hours": 48,
+    "variance_hours": null
+  }
+]</code></pre>
+
+<h3>Error Responses</h3>
+<table>
+  <thead><tr><th>Scenario</th><th>Status</th><th>Response</th></tr></thead>
+  <tbody>
+    <tr><td>Server error</td><td>4xx/5xx</td><td>Status-dependent error (thrown as <code>Error('HTTP ' + status)</code>)</td></tr>
+    <tr><td>Invalid UUID</td><td>422</td><td>FastAPI validation error detail</td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== STATUS SYSTEM ==================== -->
+<h2 id="status-system">Status System</h2>
+<p>Repairs follow a lifecycle through 5 statuses, each with an associated display colour.</p>
+
+<h3>Status Values</h3>
+<table>
+  <thead><tr><th>Status Key</th><th>Display</th><th>Colour</th><th>Filter</th><th>Stage</th></tr></thead>
+  <tbody>
+    <tr><td><code>Picked-up</code></td><td>Picked-up</td><td><code>orange</code></td><td>Open</td><td>Device collected, in queue</td></tr>
+    <tr><td><code>Picking up parts</code></td><td>Picking up parts</td><td><code>blue</code></td><td>In Progress</td><td>Parts being sourced</td></tr>
+    <tr><td><code>Work in progress</code></td><td>Work in progress</td><td><code>blue</code></td><td>In Progress</td><td>Active repair work</td></tr>
+    <tr><td><code>Finished</code></td><td>Finished</td><td><code>green</code></td><td>Completed</td><td>Repair complete, awaiting pickup</td></tr>
+    <tr><td><code>Closed</code></td><td>Closed</td><td><code>grey</code></td><td>Closed</td><td>Repair closed (final)</td></tr>
+  </tbody>
+</table>
+
+<h3>Colour Mapping Logic</h3>
+<p>The <code>getStatusColor(status, display)</code> function checks for keywords:</p>
+<table>
+  <thead><tr><th>Keyword</th><th>Colour</th></tr></thead>
+  <tbody>
+    <tr><td><code>complete</code>, <code>finish</code></td><td><code>green</code></td></tr>
+    <tr><td><code>progress</code>, <code>active</code></td><td><code>blue</code></td></tr>
+    <tr><td><code>created</code>, <code>queue</code>, <code>schedule</code>, <code>picked</code></td><td><code>orange</code></td></tr>
+    <tr><td><code>review</code>, <code>waiting</code>, <code>under</code></td><td><code>purple</code></td></tr>
+    <tr><td><em>default</em></td><td><code>grey</code></td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== DATA FLOW ==================== -->
+<h2 id="data-flow">Data Flow</h2>
+<p>The app follows a fetch &rarr; render &rarr; act &rarr; re-fetch pattern for all CRUD operations.</p>
+
+<h3>Create Order</h3>
+<pre><code>User fills form -> handleCreate()
+  +-- Validates customer name + all repair rows
+  +-- POST /admin/createorders  (apiCreateBulkRepairs)
+  +-- Closes dialog
+  +-- loadData() -> re-render everything</code></pre>
+
+<h3>Update Repair</h3>
+<pre><code>User clicks Edit -> openEditDialog(repairId)
+  +-- Pre-fills cost + ETA from existing repair
+  +-- User saves -> handleEdit()
+       +-- PUT /admin/updateorder/{order_id} (apiUpdateRepair)
+       +-- Closes dialog
+       +-- loadData() -> re-render</code></pre>
+
+<h3>Close Repair</h3>
+<pre><code>User clicks Close -> openCloseDialog(repairId)
+  +-- Shows confirmation with device/customer/status
+  +-- User confirms -> handleClose()
+       +-- PUT /admin/closeorder/{order_id} (apiCloseRepair)
+       +-- Closes dialog
+       +-- loadData() -> re-render</code></pre>
+
+<h3>Add Repair to Order</h3>
+<pre><code>User clicks "Add Repair" on order card -> openAddRepairDialog(orderId)
+  +-- Shows order ID + customer name
+  +-- User saves -> handleAddRepair()
+       +-- POST /admin/addrepair/{order_id} (apiAddRepair)
+       +-- Closes dialog
+       +-- loadData() -> re-render</code></pre>
+
+<!-- ==================== CUSTOMIZATION ==================== -->
+<h2 id="customization">Customization</h2>
+
+<h3>API Base URL</h3>
+<p>Edit <code>js/api.js</code> to point to a different backend:</p>
+<pre><code>export const API_BASE = 'https://api.example.com';</code></pre>
+
+<h3>Theme Colour</h3>
+<p>Change the primary colour in <code>js/theme.js</code>:</p>
+<pre><code>ui('theme', '#your-color-here');</code></pre>
+
+<h3>Status Values</h3>
+<p>Status constants and predicates are defined in <code>js/render.js</code>:</p>
+<pre><code>const STATUS_OPEN = 'Picked-up';
+const STATUS_IN_PROGRESS = 'Work in progress';
+const STATUS_PARTS = 'Picking up parts';
+const STATUS_FINISHED = 'Finished';
+const STATUS_CLOSED = 'Closed';</code></pre>
+<p>Edit these constants and the corresponding <code>isOpen()</code>, <code>isInProgress()</code>, <code>isComplete()</code>, <code>isClosed()</code> predicates to customise the workflow.</p>
+
+<h3>Colour Mapping</h3>
+<p>Status-to-colour mapping is handled by <code>getStatusColor()</code> in <code>js/render.js</code>. Add new keyword checks to extend colour support for additional statuses.</p>
+
+<h3>BeerCSS Framework</h3>
+<p>The app uses BeerCSS 4.0.21 loaded from CDN. All Material Design 3 components (cards, chips, dialogs, tables, nav) are available. Refer to <a href="https://beercss.com" target="_blank">beercss.com</a> for documentation.</p>
+
+<h3>Backend Status Normalisation</h3>
+<p>The backend <code>business_logic.py</code> maps raw database statuses to <code>repair_status_display</code>. New status mappings can be added on the backend without modifying the frontend.</p>
+
+<hr style="margin: 3rem 0 1rem; border: none; border-top: 1px solid var(--border);">
+<p style="color: var(--text-muted); font-size: 0.85rem;">
+  CC Order Tracking System &mdash; Admin Frontend Documentation &mdash;
+  <em>Generated from codebase &mdash; May 2026</em>
+</p>
+
+</div>
+
+<script>
+  document.querySelectorAll('.sidebar nav a').forEach(function(a) {
+    a.addEventListener('click', function(e) {
+      document.querySelectorAll('.sidebar nav a').forEach(function(l) { l.classList.remove('active'); });
+      this.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>

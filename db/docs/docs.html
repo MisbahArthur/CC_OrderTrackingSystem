@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Database Documentation — CC Order Tracking System</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f8f9fa;
+    --sidebar: #1e293b;
+    --sidebar-text: #cbd5e1;
+    --sidebar-active: #38bdf8;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --code-bg: #1e293b;
+    --code-text: #e2e8f0;
+    --green: #059669;
+    --orange: #d97706;
+    --red: #dc2626;
+    --radius: 8px;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    background: var(--sidebar);
+    color: var(--sidebar-text);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 1.5rem 0;
+  }
+  .sidebar h2 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0 1.25rem;
+    margin-bottom: 0.75rem;
+    color: #64748b;
+  }
+  .sidebar nav a {
+    display: block;
+    padding: 0.45rem 1.25rem;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    font-size: 0.875rem;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  .sidebar nav a:hover, .sidebar nav a:focus {
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+  }
+  .sidebar nav a.active { border-left-color: var(--sidebar-active); color: #fff; }
+  .sidebar nav .section-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 1rem 1.25rem 0.3rem;
+    color: #475569;
+    font-weight: 600;
+  }
+
+  .main { flex: 1; max-width: 960px; padding: 3rem 2.5rem; }
+  .main h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem; }
+  .main .subtitle { color: var(--text-muted); font-size: 1.05rem; margin-bottom: 2rem; }
+  .main h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 2.5rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border);
+  }
+  .main h3 { font-size: 1.1rem; font-weight: 600; margin: 1.5rem 0 0.75rem; }
+  .main p { margin-bottom: 1rem; color: #334155; }
+  .main ul, .main ol { margin-bottom: 1rem; padding-left: 1.5rem; color: #334155; }
+  .main li { margin-bottom: 0.3rem; }
+  .main a { color: var(--accent); text-decoration: none; }
+  .main a:hover { text-decoration: underline; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .card-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; }
+
+  code {
+    font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+    font-size: 0.85em;
+  }
+  p code, li code {
+    background: #f1f5f9;
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    color: var(--red);
+  }
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: #f1f5f9;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+  }
+  tr:last-child td { border-bottom: none; }
+
+  .badge { display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.45rem; border-radius: 4px; }
+  .badge-yes { background: #d1fae5; color: #065f46; }
+  .badge-no { background: #fee2e2; color: #991b1b; }
+
+  @media (max-width: 768px) {
+    body { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; position: static; padding: 1rem; }
+    .main { padding: 1.5rem; max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <h2>Documentation</h2>
+  <nav>
+    <a href="#overview">Overview</a>
+    <a href="#tech-stack">Tech Stack</a>
+    <a href="#project-structure">Project Structure</a>
+    <a href="#getting-started">Getting Started</a>
+    <a href="#keyspace">Keyspace</a>
+    <a href="#table">Table: order_tracking</a>
+    <a href="#primary-key">Primary Key Design</a>
+    <a href="#uuid-generation">UUID Generation</a>
+    <a href="#status-values">Status Values</a>
+    <a href="#docker-compose">Docker Compose</a>
+    <a href="#connection">Connection Configuration</a>
+    <a href="#data-flow">Data Flow</a>
+  </nav>
+</aside>
+
+<div class="main">
+
+<h1>CC Order Tracking System &mdash; Database</h1>
+<p class="subtitle">Apache Cassandra 5.0.7 — durable, scalable storage layer.</p>
+
+<!-- ==================== OVERVIEW ==================== -->
+<h2 id="overview">Overview</h2>
+<p>
+  The database layer for the <strong>CC Order Tracking System</strong> uses <strong>Apache Cassandra 5.0.7</strong> to store and manage repair order data. Cassandra provides high availability, linear scalability, and fault tolerance — suitable for a production order-tracking workload.
+</p>
+<p>
+  The database runs inside a Docker container managed by Docker Compose. The schema is initialised automatically on first startup via a dedicated init container that executes a CQL script.
+</p>
+
+<!-- ==================== TECH STACK ==================== -->
+<h2 id="tech-stack">Tech Stack</h2>
+<table>
+  <thead><tr><th>Component</th><th>Technology</th><th>Version</th></tr></thead>
+  <tbody>
+    <tr><td>Database</td><td>Apache Cassandra</td><td>5.0.7</td></tr>
+    <tr><td>Query Language</td><td>CQL (Cassandra Query Language)</td><td>&mdash;</td></tr>
+    <tr><td>Container Runtime</td><td>Docker Compose</td><td>&mdash;</td></tr>
+    <tr><td>Base Image</td><td><code>cassandra:5.0.7</code></td><td>&mdash;</td></tr>
+    <tr><td>Python Driver</td><td><code>cassandra-driver</code></td><td>3.30.0</td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== PROJECT STRUCTURE ==================== -->
+<h2 id="project-structure">Project Structure</h2>
+<pre><code>db/
+  docker-compose.yaml   # Cassandra 5.0.7 container definition
+  init.cql              # CQL schema (keyspace &amp; table)</code></pre>
+
+<table>
+  <thead><tr><th>File</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><code>docker-compose.yaml</code></td><td>Defines the Cassandra service and init container with health checks, persistent volumes, and environment configuration.</td></tr>
+    <tr><td><code>init.cql</code></td><td>Contains the CQL statements to create the <code>order_keyspace</code> keyspace and the <code>order_tracking</code> table. Executed automatically on first startup.</td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== GETTING STARTED ==================== -->
+<h2 id="getting-started">Getting Started</h2>
+
+<h3>Prerequisites</h3>
+<ul>
+  <li>Docker &amp; Docker Compose installed</li>
+</ul>
+
+<h3>Setup</h3>
+<ol>
+  <li>
+    <strong>Start the database</strong>
+    <pre><code>cd db
+docker compose up -d</code></pre>
+  </li>
+  <li>
+    <strong>Verify the container is healthy</strong>
+    <pre><code>docker compose ps</code></pre>
+    <p>Wait until <code>cassandra_node</code> shows <code>healthy</code> in the status column. The init container (<code>cassandra_init_script</code>) will run automatically after health checks pass.</p>
+  </li>
+  <li>
+    <strong>Verify the schema was loaded</strong>
+    <pre><code>docker exec cassandra_node cqlsh -e "
+  USE order_keyspace;
+  DESCRIBE TABLES;
+  SELECT * FROM order_tracking LIMIT 5;
+"</code></pre>
+  </li>
+</ol>
+
+<!-- ==================== KEYSPACE ==================== -->
+<h2 id="keyspace">Keyspace</h2>
+<p>A single keyspace <code>order_keyspace</code> holds all order-tracking data.</p>
+
+<table>
+  <thead><tr><th>Property</th><th>Value</th></tr></thead>
+  <tbody>
+    <tr><td>Name</td><td><code>order_keyspace</code></td></tr>
+    <tr><td>Replication Strategy</td><td><code>SimpleStrategy</code></td></tr>
+    <tr><td>Replication Factor</td><td><code>1</code></td></tr>
+    <tr><td>Creation CQL</td><td><code>CREATE KEYSPACE IF NOT EXISTS order_keyspace WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };</code></td></tr>
+  </tbody>
+</table>
+
+<p>In production, increase the replication factor to <code>3</code> (or more) and consider using <code>NetworkTopologyStrategy</code> for multi-datacenter deployments.</p>
+
+<!-- ==================== TABLE ==================== -->
+<h2 id="table">Table: <code>order_tracking</code></h2>
+<p>Each row represents one repair line-item within an order. An order may span multiple rows (same <code>order_id</code>, different <code>repair_id</code>).</p>
+
+<table>
+  <thead><tr><th>Column</th><th>Type</th><th>Key</th><th>Required</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td><code>order_id</code></td><td><code>UUID</code></td><td>PARTITION KEY</td><td><span class="badge badge-yes">yes</span></td><td>Random UUIDv4, generated on creation</td></tr>
+    <tr><td><code>repair_id</code></td><td><code>TIMEUUID</code></td><td>CLUSTERING KEY (ASC)</td><td><span class="badge badge-yes">yes</span></td><td>Time-based UUIDv1, unique per repair item</td></tr>
+    <tr><td><code>customer_name</code></td><td><code>text</code></td><td></td><td><span class="badge badge-yes">yes</span></td><td></td></tr>
+    <tr><td><code>repair_device</code></td><td><code>text</code></td><td></td><td><span class="badge badge-yes">yes</span></td><td>Device description (e.g. "MacBook Pro 14")</td></tr>
+    <tr><td><code>order_creation</code></td><td><code>TIMEUUID</code></td><td></td><td><span class="badge badge-yes">yes</span></td><td>Time-based UUIDv1, set when the order is created</td></tr>
+    <tr><td><code>repair_cost</code></td><td><code>decimal</code></td><td></td><td><span class="badge badge-yes">yes</span></td><td>Monetary amount</td></tr>
+    <tr><td><code>repair_start</code></td><td><code>timestamp</code></td><td></td><td><span class="badge badge-no">no</span></td><td>When repair work began (nullable)</td></tr>
+    <tr><td><code>repair_finish</code></td><td><code>timestamp</code></td><td></td><td><span class="badge badge-no">no</span></td><td>When repair work finished (nullable)</td></tr>
+    <tr><td><code>repair_status</code></td><td><code>text</code></td><td></td><td><span class="badge badge-yes">yes</span></td><td>Enumerated string (see status values below)</td></tr>
+    <tr><td><code>repair_eta</code></td><td><code>text</code></td><td></td><td><span class="badge badge-yes">yes</span></td><td>Estimated completion time (human-readable)</td></tr>
+  </tbody>
+</table>
+
+<p><strong>Creation CQL:</strong></p>
+<pre><code>CREATE TABLE IF NOT EXISTS order_tracking (
+    order_id UUID,
+    repair_id TIMEUUID,
+    customer_name text,
+    repair_device text,
+    order_creation TIMEUUID,
+    repair_cost decimal,
+    repair_start timestamp,
+    repair_finish timestamp,
+    repair_status text,
+    repair_eta text,
+    PRIMARY KEY (order_id, repair_id)
+) WITH CLUSTERING ORDER BY (repair_id ASC);</code></pre>
+
+<!-- ==================== PRIMARY KEY ==================== -->
+<h2 id="primary-key">Primary Key Design</h2>
+
+<div class="card">
+  <div class="card-title">Partition Key: <code>order_id</code></div>
+  <p>A single order is stored as one Cassandra partition. All repairs belonging to the same order reside in the same partition, enabling efficient single-order queries. Queries filtering by <code>order_id</code> hit exactly one partition.</p>
+</div>
+
+<div class="card">
+  <div class="card-title">Clustering Key: <code>repair_id ASC</code></div>
+  <p>Within a partition, rows are ordered by <code>repair_id</code> in ascending order. Since <code>repair_id</code> is a <code>TIMEUUID</code>, rows are naturally sorted by creation time — the oldest repair appears first.</p>
+</div>
+
+<p><strong>Trade-offs:</strong></p>
+<ul>
+  <li>Listing all orders across all partitions requires a full table scan (no <code>ALLOW FILTERING</code> needed for <code>SELECT *</code>).</li>
+  <li>Cross-order queries (e.g. "all repairs for customer X") are not natively supported and would require a secondary index or materialised view.</li>
+  <li>The <code>repair_status</code> field is not indexed — status-based filtering across orders requires scanning.</li>
+</ul>
+
+<!-- ==================== UUID GENERATION ==================== -->
+<h2 id="uuid-generation">UUID Generation</h2>
+<p>The backend generates three types of UUIDs for different purposes:</p>
+
+<table>
+  <thead><tr><th>Field</th><th>UUID Type</th><th>Generation</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><code>order_id</code></td><td>UUIDv4 (random)</td><td><code>uuid.uuid4()</code></td><td>Unpredictable partition key; prevents partition hot-spotting</td></tr>
+    <tr><td><code>repair_id</code></td><td>UUIDv1 (time-based)</td><td><code>uuid.uuid1()</code></td><td>Enables time-ordered clustering within a partition</td></tr>
+    <tr><td><code>order_creation</code></td><td>UUIDv1 (time-based)</td><td><code>uuid.uuid1()</code></td><td>Captures the creation timestamp in a sortable format</td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== STATUS VALUES ==================== -->
+<h2 id="status-values">Status Values</h2>
+<p>The <code>repair_status</code> column stores one of five string values representing the repair lifecycle:</p>
+
+<table>
+  <thead><tr><th>Status</th><th>Description</th><th>Terminal</th></tr></thead>
+  <tbody>
+    <tr><td><code>Picked-up</code></td><td>Device has been received by the clinic and is in the queue</td><td><span class="badge badge-no">no</span></td></tr>
+    <tr><td><code>Picking up parts</code></td><td>Waiting for replacement parts to arrive</td><td><span class="badge badge-no">no</span></td></tr>
+    <tr><td><code>Work in progress</code></td><td>Repair is currently underway</td><td><span class="badge badge-no">no</span></td></tr>
+    <tr><td><code>Finished</code></td><td>Repair is complete, awaiting customer pickup</td><td><span class="badge badge-no">no</span></td></tr>
+    <tr><td><code>Closed</code></td><td>Order is closed (customer notified, device collected)</td><td><span class="badge badge-yes">yes</span></td></tr>
+  </tbody>
+</table>
+
+<p>Status transitions are enforced by the backend business logic, not by Cassandra constraints. The database stores the raw status string as-is.</p>
+
+<!-- ==================== DOCKER COMPOSE ==================== -->
+<h2 id="docker-compose">Docker Compose</h2>
+<p>The <code>docker-compose.yaml</code> defines two services:</p>
+
+<h3>Service: <code>cassandra</code></h3>
+<table>
+  <thead><tr><th>Attribute</th><th>Value</th></tr></thead>
+  <tbody>
+    <tr><td>Image</td><td><code>cassandra:5.0.7</code></td></tr>
+    <tr><td>Container Name</td><td><code>cassandra_node</code></td></tr>
+    <tr><td>Port Mapping</td><td><code>9042:9042</code> (CQL native transport)</td></tr>
+    <tr><td>Cluster Name</td><td><code>MyCluster</code></td></tr>
+    <tr><td>Datacenter</td><td><code>datacenter1</code></td></tr>
+    <tr><td>Endpoint Snitch</td><td><code>GossipingPropertyFileSnitch</code></td></tr>
+    <tr><td>JVM Heap</td><td>Max 1G, New 200M</td></tr>
+    <tr><td>Data Volume</td><td><code>cassandra_data</code> (named volume, persisted across restarts)</td></tr>
+    <tr><td>Health Check</td><td><code>cqlsh -e 'describe keyspaces'</code> every 10s, 5s timeout, 10 retries</td></tr>
+    <tr><td>Restart Policy</td><td><code>always</code></td></tr>
+  </tbody>
+</table>
+
+<h3>Service: <code>cassandra-init</code></h3>
+<table>
+  <thead><tr><th>Attribute</th><th>Value</th></tr></thead>
+  <tbody>
+    <tr><td>Image</td><td><code>cassandra:5.0.7</code></td></tr>
+    <tr><td>Container Name</td><td><code>cassandra_init_script</code></td></tr>
+    <tr><td>Depends On</td><td><code>cassandra</code> (condition: <code>service_healthy</code>)</td></tr>
+    <tr><td>Volume Mount</td><td><code>./init.cql:/init.cql</code></td></tr>
+    <tr><td>Command</td><td><code>cqlsh cassandra_node -f /init.cql</code></td></tr>
+  </tbody>
+</table>
+
+<h3>Volumes</h3>
+<pre><code>volumes:
+  cassandra_data:</code></pre>
+<p>A named Docker volume <code>cassandra_data</code> is mounted at <code>/var/lib/cassandra</code> inside the container, ensuring data survives container restarts and upgrades.</p>
+
+<!-- ==================== CONNECTION ==================== -->
+<h2 id="connection">Connection Configuration</h2>
+<p>The Python backend connects to Cassandra using the <code>cassandra-driver</code> library via the <code>CassandraManager</code> class in <code>back-end/database.py</code>:</p>
+
+<table>
+  <thead><tr><th>Setting</th><th>Value</th><th>Location</th></tr></thead>
+  <tbody>
+    <tr><td>Host</td><td><code>localhost</code></td><td><code>database.py:8</code> &mdash; default parameter</td></tr>
+    <tr><td>Port</td><td><code>9042</code></td><td><code>database.py:12</code> &mdash; hardcoded in <code>Cluster()</code> call</td></tr>
+    <tr><td>Keyspace</td><td><code>order_keyspace</code></td><td><code>database.py:8</code> &mdash; default parameter</td></tr>
+    <tr><td>I/O Reactor</td><td><code>AsyncioConnection</code></td><td><code>database.py:2</code></td></tr>
+  </tbody>
+</table>
+
+<pre><code>from cassandra.cluster import Cluster
+from cassandra.io.asyncioreactor import AsyncioConnection
+
+cluster = Cluster(['localhost'], port=9042)
+session = cluster.connect()
+session.execute("CREATE KEYSPACE IF NOT EXISTS order_keyspace ...")
+session.set_keyspace('order_keyspace')</code></pre>
+
+<!-- ==================== DATA FLOW ==================== -->
+<h2 id="data-flow">Data Flow</h2>
+
+<h3>Startup Sequence</h3>
+<ol>
+  <li><strong>Docker Compose</strong> starts the <code>cassandra</code> container.</li>
+  <li>Cassandra initialises its cluster, datacenter, and internal tables.</li>
+  <li>The <strong>health check</strong> polls every 10s until <code>cqlsh -e 'describe keyspaces'</code> succeeds.</li>
+  <li>Once healthy, Docker Compose starts the <code>cassandra-init</code> container, which executes <code>init.cql</code> against the <code>cassandra_node</code> host.</li>
+  <li><code>init.cql</code> creates <code>order_keyspace</code> (if not exists) and <code>order_tracking</code> (if not exists).</li>
+  <li>The init container exits. The <code>cassandra</code> container remains running.</li>
+</ol>
+
+<h3>Application Interaction</h3>
+<ol>
+  <li>The backend <code>CassandraManager.connect()</code> is called during FastAPI startup.</li>
+  <li>It creates a <code>Cluster</code> connection and sets the keyspace on the session.</li>
+  <li>Route handlers inject the session via the FastAPI dependency <code>get_cassandra_session()</code>.</li>
+  <li>All queries use parameterised <code>%s</code> placeholders to prevent CQL injection.</li>
+  <li>On FastAPI shutdown, <code>CassandraManager.close()</code> shuts down the cluster connection gracefully.</li>
+</ol>
+
+<h3>Database Lifecycle Diagram</h3>
+<pre><code>docker compose up -d
+        |
+        v
+  cassandra:5.0.7 container starts
+        |
+        v
+  Health check: cqlsh -e 'describe keyspaces'
+        |
+        v (healthy)
+  cassandra-init runs init.cql
+        |
+        v
+  backend starts -> CassandraManager.connect()
+        |
+        v
+  FastAPI routes -> get_cassandra_session() -> CQL queries
+        |
+        v
+  FastAPI shutdown -> CassandraManager.close()</code></pre>
+
+<hr style="margin: 3rem 0 1rem; border: none; border-top: 1px solid var(--border);">
+<p style="color: var(--text-muted); font-size: 0.85rem;">
+  CC Order Tracking System &mdash; Database Documentation &mdash;
+  <em>Generated from codebase &mdash; May 2026</em>
+</p>
+
+</div>
+
+<script>
+  document.querySelectorAll('.sidebar nav a').forEach(function(a) {
+    a.addEventListener('click', function(e) {
+      document.querySelectorAll('.sidebar nav a').forEach(function(l) { l.classList.remove('active'); });
+      this.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>

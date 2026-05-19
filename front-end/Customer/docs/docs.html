@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customer Frontend Documentation — CC Order Tracking System</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f8f9fa;
+    --sidebar: #1e293b;
+    --sidebar-text: #cbd5e1;
+    --sidebar-active: #38bdf8;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --code-bg: #1e293b;
+    --code-text: #e2e8f0;
+    --green: #059669;
+    --orange: #d97706;
+    --red: #dc2626;
+    --radius: 8px;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    background: var(--sidebar);
+    color: var(--sidebar-text);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 1.5rem 0;
+  }
+  .sidebar h2 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0 1.25rem;
+    margin-bottom: 0.75rem;
+    color: #64748b;
+  }
+  .sidebar nav a {
+    display: block;
+    padding: 0.45rem 1.25rem;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    font-size: 0.875rem;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  .sidebar nav a:hover, .sidebar nav a:focus {
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+  }
+  .sidebar nav a.active { border-left-color: var(--sidebar-active); color: #fff; }
+  .sidebar nav .section-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 1rem 1.25rem 0.3rem;
+    color: #475569;
+    font-weight: 600;
+  }
+
+  /* Main */
+  .main { flex: 1; max-width: 960px; padding: 3rem 2.5rem; }
+  .main h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem; }
+  .main .subtitle { color: var(--text-muted); font-size: 1.05rem; margin-bottom: 2rem; }
+  .main h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 2.5rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border);
+  }
+  .main h3 { font-size: 1.1rem; font-weight: 600; margin: 1.5rem 0 0.75rem; }
+  .main p { margin-bottom: 1rem; color: #334155; }
+  .main ul, .main ol { margin-bottom: 1rem; padding-left: 1.5rem; color: #334155; }
+  .main li { margin-bottom: 0.3rem; }
+  .main a { color: var(--accent); text-decoration: none; }
+  .main a:hover { text-decoration: underline; }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .card-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; }
+
+  /* Code */
+  code {
+    font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+    font-size: 0.85em;
+  }
+  p code, li code {
+    background: #f1f5f9;
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    color: var(--red);
+  }
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: #f1f5f9;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+  }
+  tr:last-child td { border-bottom: none; }
+
+  /* Badge */
+  .badge { display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.45rem; border-radius: 4px; }
+  .badge-yes { background: #d1fae5; color: #065f46; }
+  .badge-no { background: #fee2e2; color: #991b1b; }
+
+  .method-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    min-width: 48px;
+    text-align: center;
+  }
+  .method-GET { background: #dbeafe; color: #1d4ed8; }
+
+  /* Mobile nav */
+  .mobile-nav { display: none; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    body { flex-direction: column; }
+    .sidebar { display: none; }
+    .mobile-nav { display: block; width: 100%; }
+    .mobile-nav summary {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .mobile-nav nav {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1rem 1rem;
+    }
+    .mobile-nav nav a {
+      display: block;
+      padding: 0.5rem 0.75rem;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.875rem;
+      border-radius: var(--radius);
+    }
+    .mobile-nav nav a:hover { background: var(--accent-light); }
+    .main { padding: 1.5rem; max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <h2>Documentation</h2>
+  <nav>
+    <div class="section-label">Customer Frontend</div>
+    <a href="#overview">Overview</a>
+    <a href="#structure">Project Structure</a>
+    <a href="#getting-started">Getting Started</a>
+    <a href="#architecture">Architecture</a>
+
+    <div class="section-label">Modules</div>
+    <a href="#module-api">api.js</a>
+    <a href="#module-app">app.js</a>
+    <a href="#module-stepper">stepper.js</a>
+    <a href="#module-theme">theme.js</a>
+
+    <div class="section-label">Reference</div>
+    <a href="#api-contract">API Contract</a>
+    <a href="#url-params">URL Parameters</a>
+    <a href="#customization">Customization</a>
+  </nav>
+</aside>
+
+<details class="mobile-nav">
+  <summary>Customer Frontend Docs</summary>
+  <nav>
+    <a href="#overview">Overview</a>
+    <a href="#structure">Project Structure</a>
+    <a href="#getting-started">Getting Started</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#module-api">api.js</a>
+    <a href="#module-app">app.js</a>
+    <a href="#module-stepper">stepper.js</a>
+    <a href="#module-theme">theme.js</a>
+    <a href="#api-contract">API Contract</a>
+    <a href="#url-params">URL Parameters</a>
+    <a href="#customization">Customization</a>
+  </nav>
+</details>
+
+<div class="main">
+
+<h1>CC Order Tracking System &mdash; Customer Frontend</h1>
+<p class="subtitle">Customer-facing order tracking portal for checking device repair status.</p>
+
+<!-- ==================== OVERVIEW ==================== -->
+<h2 id="overview">Overview</h2>
+<p>
+  The <strong>Customer Frontend</strong> is a static single-page application that lets customers track their device repair orders in real time. Users enter an Order ID, and the app displays a timeline stepper showing the current stage of each repair (<em>Picked-up &rarr; Picking up parts &rarr; Work in progress &rarr; Finished</em>).
+</p>
+<p>
+  Built with vanilla JavaScript, HTML, and CSS. No build step or framework required.
+</p>
+
+<!-- ==================== PROJECT STRUCTURE ==================== -->
+<h2 id="structure">Project Structure</h2>
+<pre><code>front-end/Customer/
+  index.html          # Main entry — two views (landing + trace)
+  favicon.ico
+  css/                # Reserved for custom styles (currently empty)
+  js/
+    api.js            # HTTP client — talks to the backend API
+    app.js            # Core app logic — views, events, DOM manipulation
+    stepper.js        # Timeline / stepper rendering
+    theme.js          # Dark / light theme toggle</code></pre>
+
+<table>
+  <thead><tr><th>File</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><code>index.html</code></td><td>Single HTML entry with landing and trace views, inline CSS.</td></tr>
+    <tr><td><code>js/api.js</code></td><td>HTTP client for backend API communication.</td></tr>
+    <tr><td><code>js/app.js</code></td><td>Main controller — views, events, card rendering, form handling.</td></tr>
+    <tr><td><code>js/stepper.js</code></td><td>Timeline stepper rendering for repair status progression.</td></tr>
+    <tr><td><code>js/theme.js</code></td><td>Dark/light theme management.</td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== GETTING STARTED ==================== -->
+<h2 id="getting-started">Getting Started</h2>
+
+<h3>Prerequisites</h3>
+<ul>
+  <li>Any static file server (e.g. <code>npx serve</code>, <code>python3 -m http.server</code>)</li>
+  <li>Backend running at <code>http://localhost:8000</code> (configurable in <code>js/api.js</code>)</li>
+</ul>
+
+<h3>Setup</h3>
+<ol>
+  <li>
+    <strong>Serve the directory</strong>
+    <pre><code>npx serve front-end/Customer/
+# or
+python3 -m http.server 8080 --directory front-end/Customer/</code></pre>
+  </li>
+  <li>
+    <strong>Ensure the backend is running</strong> on <code>http://localhost:8000</code>.
+  </li>
+  <li>
+    <strong>Open</strong> <code>http://localhost:8080</code> in a browser.
+  </li>
+</ol>
+<p>The app requires no build step. Just serve the static files.</p>
+
+<!-- ==================== ARCHITECTURE ==================== -->
+<h2 id="architecture">Architecture</h2>
+<p>The app has two views managed by <code>app.js</code>:</p>
+<ol>
+  <li><strong>Landing View</strong> (<code>#viewLanding</code>) &mdash; a form where the user enters an Order ID.</li>
+  <li><strong>Trace View</strong> (<code>#viewTrace</code>) &mdash; displays repair card(s) with a timeline stepper, a loading spinner, and an error state.</li>
+</ol>
+<p>Data flow:</p>
+<pre><code>User enters Order ID
+        |
+        v
+app.js handleTrack() -> api.js fetchOrder(orderId)
+        |
+        v
+  GET /customer/vieworders/{order_id}
+        |
+        v
+  Response (JSON array of repairs)
+        |
+        v
+app.js createRepairCard() -> stepper.js renderStepper(status)
+        |
+        v
+  DOM updated with repair info + timeline</code></pre>
+<p>URL query parameter support: Passing <code>?order_id=xxx</code> auto-submits the form on page load (deep linking).</p>
+
+<!-- ==================== MODULE: API.JS ==================== -->
+<h2 id="module-api">Module: <code>api.js</code></h2>
+<table>
+  <thead><tr><th>Export</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>fetchOrder(orderId)</code></td><td><code>async function</code></td><td>Fetches repair data for a given Order ID from the backend.</td></tr>
+  </tbody>
+</table>
+
+<h3>Configuration</h3>
+<pre><code>const API_BASE = 'http://localhost:8000';</code></pre>
+<p>Change this to point to the production backend URL.</p>
+
+<h3><code>fetchOrder(orderId)</code></h3>
+<p>Makes a <code>GET</code> request to <code>/customer/vieworders/{orderId}</code>. Returns a <strong>Promise</strong> that resolves to an array of repair objects. Throws an error if:</p>
+<ul>
+  <li>Server returns a non-2xx status.</li>
+  <li>Response contains a <code>message</code> field (order closed / no repairs found).</li>
+  <li>The result array is empty.</li>
+</ul>
+<pre><code>import { fetchOrder } from './api.js';
+
+const orders = await fetchOrder('550e8400-e29b-41d4-a716-446655440000');
+// orders -> [{ order_id, repair_id, customer_name, ... }]</code></pre>
+
+<!-- ==================== MODULE: APP.JS ==================== -->
+<h2 id="module-app">Module: <code>app.js</code></h2>
+<p>The main orchestrator. Handles view toggling, form submission, card rendering, and event binding.</p>
+
+<h3>Key Functions</h3>
+<table>
+  <thead><tr><th>Function</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>show(id)</code></td><td>Shows a view by <code>id</code> (<code>viewLanding</code> or <code>viewTrace</code>), hides all others.</td></tr>
+    <tr><td><code>showTraceContent(show)</code></td><td>Shows the trace content area, hides loading/error states.</td></tr>
+    <tr><td><code>showTraceError(msg)</code></td><td>Shows the error state with a custom message.</td></tr>
+    <tr><td><code>showTraceLoading()</code></td><td>Shows the loading spinner, hides content/error.</td></tr>
+    <tr><td><code>createRepairCard(data)</code></td><td>Builds a DOM <code>&lt;article&gt;</code> card with order info and a stepper.</td></tr>
+    <tr><td><code>populateOrders(orders)</code></td><td>Renders all repair cards into the container (grid layout for multiple).</td></tr>
+    <tr><td><code>handleTrack(e)</code></td><td>Form submit handler &mdash; fetches order and switches to trace view.</td></tr>
+    <tr><td><code>handleBack()</code></td><td>Goes back to the landing view.</td></tr>
+    <tr><td><code>handleRetry()</code></td><td>Re-submits the current search on error.</td></tr>
+    <tr><td><code>init()</code></td><td>Binds events, checks URL for <code>?order_id=</code>, initializes theme.</td></tr>
+  </tbody>
+</table>
+
+<h3>Event Flow</h3>
+<pre><code>DOMContentLoaded
+  +-- init()
+       +-- Bind "submit" on #trackForm  -> handleTrack
+       +-- Bind "click" on #backBtn     -> handleBack
+       +-- Bind "click" on #retryBtn    -> handleRetry
+       +-- Bind keydown on #orderIdInput -> Enter triggers submit
+       +-- Check ?order_id= URL param -> auto-search
+       +-- initTheme() from theme.js</code></pre>
+
+<h3>Repair Card Fields</h3>
+<table>
+  <thead><tr><th>Field</th><th>Source</th><th>Fallback</th></tr></thead>
+  <tbody>
+    <tr><td>Order ID</td><td><code>data.order_id</code></td><td><code>&mdash;</code></td></tr>
+    <tr><td>Repair ID</td><td><code>data.repair_id</code></td><td><code>&mdash;</code></td></tr>
+    <tr><td>Customer Name</td><td><code>data.customer_name</code></td><td><code>&mdash;</code></td></tr>
+    <tr><td>Device</td><td><code>data.repair_device</code></td><td><code>&mdash;</code></td></tr>
+    <tr><td>Cost</td><td><code>data.repair_cost</code> &rarr; <code>$XX.XX</code></td><td><code>&mdash;</code></td></tr>
+    <tr><td>ETA</td><td><code>data.repair_eta</code></td><td><code>&mdash;</code></td></tr>
+    <tr><td>Status</td><td><code>data.repair_status_display</code> or <code>repair_status</code></td><td><em>raw value</em></td></tr>
+    <tr><td>Date</td><td><code>data.repair_start</code> &rarr; locale date string</td><td><code>&mdash;</code></td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== MODULE: STEPPER.JS ==================== -->
+<h2 id="module-stepper">Module: <code>stepper.js</code></h2>
+<p>Renders a vertical timeline stepper that visualises the repair status progression.</p>
+
+<h3>Steps</h3>
+<table>
+  <thead><tr><th>Index</th><th>Key</th><th>Label</th></tr></thead>
+  <tbody>
+    <tr><td>0</td><td><code>Picked-up</code></td><td>Picked-up</td></tr>
+    <tr><td>1</td><td><code>Picking up parts</code></td><td>Picking up parts</td></tr>
+    <tr><td>2</td><td><code>Work in progress</code></td><td>Work in progress</td></tr>
+    <tr><td>3</td><td><code>Finished</code></td><td>Finished</td></tr>
+  </tbody>
+</table>
+
+<h3>Exports</h3>
+<table>
+  <thead><tr><th>Export</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>getActiveStepIndex(status)</code></td><td>Returns the index (0&ndash;3) for a given status string, or <code>-1</code> if unknown.</td></tr>
+    <tr><td><code>renderStepper(currentStatus, containerEl)</code></td><td>Builds the timeline DOM inside the given container (or <code>#stepperContainer</code>).</td></tr>
+  </tbody>
+</table>
+
+<h3>Rendering Logic</h3>
+<ul>
+  <li><strong>Completed</strong> (<code>index &lt; activeIndex</code>): teal background, check icon.</li>
+  <li><strong>Active</strong> (<code>index === activeIndex</code>): teal background with a pulsing glow.</li>
+  <li><strong>Pending</strong> (<code>index &gt; activeIndex</code>): gray background, muted icon.</li>
+</ul>
+
+<!-- ==================== MODULE: THEME.JS ==================== -->
+<h2 id="module-theme">Module: <code>theme.js</code></h2>
+<p>Manages dark/light mode with <code>localStorage</code> persistence and system preference detection.</p>
+
+<h3>Exports</h3>
+<table>
+  <thead><tr><th>Export</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>initTheme()</code></td><td>Reads stored theme (or system preference), applies it, binds the toggle button.</td></tr>
+  </tbody>
+</table>
+
+<h3>Behaviour</h3>
+<ol>
+  <li>Check <code>localStorage</code> key <code>cc-theme</code>.</li>
+  <li>If not set, fall back to <code>prefers-color-scheme: dark</code> media query.</li>
+  <li>Toggle <code>dark</code> class on <code>&lt;html&gt;</code>.</li>
+  <li>Swap the toggle icon between <code>ph-moon</code> (light) and <code>ph-sun</code> (dark).</li>
+  <li>On toggle click, flip the mode and persist to <code>localStorage</code>.</li>
+</ol>
+
+<!-- ==================== API CONTRACT ==================== -->
+<h2 id="api-contract">API Contract</h2>
+
+<h3><span class="method-badge method-GET">GET</span> <code>/customer/vieworders/{order_id}</code></h3>
+<table>
+  <thead><tr><th>Attribute</th><th>Details</th></tr></thead>
+  <tbody>
+    <tr><td>Method</td><td><code>GET</code></td></tr>
+    <tr><td>URL</td><td><code>/customer/vieworders/{order_id}</code></td></tr>
+    <tr><td>Auth</td><td>None (public)</td></tr>
+    <tr><td>Path param</td><td><code>order_id</code> &mdash; UUID string</td></tr>
+    <tr><td>Headers</td><td><code>Accept: application/json</code></td></tr>
+  </tbody>
+</table>
+
+<h3>Success Response (200)</h3>
+<p>Returns a JSON <strong>array</strong> of repair objects:</p>
+<pre><code>[
+  {
+    "order_id": "550e8400-e29b-41d4-a716-446655440000",
+    "repair_id": "660e8400-e29b-41d4-a716-446655440001",
+    "customer_name": "John Doe",
+    "repair_device": "MacBook Pro 14",
+    "repair_cost": 249.99,
+    "repair_status": "Work in progress",
+    "repair_status_display": "Work in progress",
+    "repair_eta": "2026-05-20",
+    "repair_start": "2026-05-15T10:00:00",
+    "actual_hours": null,
+    "estimated_hours": 48,
+    "variance_hours": null
+  }
+]</code></pre>
+
+<h3>Error Responses</h3>
+<table>
+  <thead><tr><th>Scenario</th><th>Status</th><th>Response</th></tr></thead>
+  <tbody>
+    <tr><td>Order has been closed</td><td>200</td><td><code>{"message": "This order has been closed."}</code></td></tr>
+    <tr><td>No repairs found</td><td>200</td><td><code>{"message": "No repairs found for this order"}</code></td></tr>
+    <tr><td>Invalid UUID</td><td>422</td><td>Validation error detail</td></tr>
+    <tr><td>Other server error</td><td>4xx/5xx</td><td>Status-dependent error</td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== URL PARAMETERS ==================== -->
+<h2 id="url-params">URL Parameters</h2>
+<p>The app supports a single query parameter for deep linking:</p>
+<table>
+  <thead><tr><th>Parameter</th><th>Example</th><th>Behaviour</th></tr></thead>
+  <tbody>
+    <tr><td><code>order_id</code></td><td><code>?order_id=550e8400-e29b-41d4-a716-446655440000</code></td><td>Auto-fills the input and triggers the search on page load.</td></tr>
+  </tbody>
+</table>
+<p>This enables linking customers directly to their order status page.</p>
+
+<!-- ==================== CUSTOMIZATION ==================== -->
+<h2 id="customization">Customization</h2>
+
+<h3>API Base URL</h3>
+<p>Edit <code>js/api.js</code> to change the backend URL:</p>
+<pre><code>const API_BASE = 'https://api.example.com';</code></pre>
+
+<h3>Stepper Steps</h3>
+<p>Edit the <code>STEPS</code> array and <code>STATUS_ORDER</code> map in <code>js/stepper.js</code> to add, remove, or rename steps.</p>
+
+<h3>Status Normalisation (Backend)</h3>
+<p>The backend <code>business_logic.py</code> maps raw database statuses to display statuses. This can be extended without touching the frontend.</p>
+
+<hr style="margin: 3rem 0 1rem; border: none; border-top: 1px solid var(--border);">
+<p style="color: var(--text-muted); font-size: 0.85rem;">
+  CC Order Tracking System &mdash; Customer Frontend Documentation &mdash;
+  <em>Generated from codebase &mdash; May 2026</em>
+</p>
+
+</div>
+
+<script>
+  document.querySelectorAll('.sidebar nav a').forEach(function(a) {
+    a.addEventListener('click', function(e) {
+      document.querySelectorAll('.sidebar nav a').forEach(function(l) { l.classList.remove('active'); });
+      this.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
