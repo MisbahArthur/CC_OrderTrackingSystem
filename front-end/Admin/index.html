@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="google" content="notranslate">
+  <title>Admin Dashboard — Order Repair Tracking</title>
+  <link rel="preconnect" href="http://localhost:8000">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/beercss@4.0.21/dist/cdn/beer.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+  <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@4.0.21/dist/cdn/beer.min.js"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.4/dist/cdn/material-dynamic-colors.min.js"></script>
+  <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}.stat-card{display:flex;align-items:center;gap:16px;padding:20px}.stat-card .icon-wrap{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}.stat-card .icon-wrap i{font-size:24px}.stat-card .stat-value{font-size:28px;font-weight:600;line-height:1.2}.stat-card .stat-label{font-size:13px;opacity:.7}.view{display:none}.view.active{display:block}.order-card{border:1px solid var(--outline-variant);border-radius:16px;overflow:hidden}.order-card-header{padding:16px 20px;cursor:pointer;user-select:none}.order-card-header .arrow{transition:transform .2s}.order-card-header.collapsed .arrow{transform:rotate(-90deg)}.order-card-body.collapsed{display:none}.search-bar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:20px}.search-bar .field{flex:1;min-width:200px}.filter-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}.filter-chips .chip{cursor:pointer}.filter-chips .chip .count{display:inline-block;min-width:20px;height:20px;line-height:20px;text-align:center;font-size:11px;border-radius:999px;padding:0 6px}.filter-chips .chip.fill .count{background:rgba(255,255,255,.2)}.filter-chips .chip.fill.primary{background-color:var(--primary)!important;color:var(--on-primary)!important}.filter-chips .chip.fill.orange{background-color:#ff9800!important;color:#fff!important}.filter-chips .chip.fill.blue{background-color:#2196f3!important;color:#fff!important}.filter-chips .chip.fill.green{background-color:#4caf50!important;color:#fff!important}.table-actions{display:flex;gap:4px;justify-content:center}.table-actions button{min-width:unset;width:36px;height:36px;position:relative}.status-chip{font-size:12px;padding:2px 10px;white-space:nowrap}.status-cell{text-align:center}.dialog-form{display:flex;flex-direction:column;gap:16px;margin:8px 0 16px}.dialog-form .field{width:100%}.empty-state{text-align:center;padding:48px 24px;opacity:.6}.empty-state i{font-size:48px;margin-bottom:12px}main.responsive{max-width:1400px;margin:0 auto;padding:24px;width:100%}.repair-id{font-family:monospace;font-size:13px}nav.left a{cursor:pointer}.scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}@media(max-width:600px){main.responsive{padding:16px}.stats-grid{grid-template-columns:1fr 1fr;gap:12px}.stat-card{padding:14px}.stat-card .stat-value{font-size:22px}.stat-card .icon-wrap{width:42px;height:42px}.stat-card .icon-wrap i{font-size:20px}}</style>
+</head>
+<body>
+
+  <!-- ===== SIDEBAR (large + medium) ===== -->
+  <nav class="left max m l">
+    <header>
+      <nav>
+        <i class="large">build_circle</i>
+        <h6 class="medium-text">Repair Admin</h6>
+      </nav>
+    </header>
+    <a data-view="dashboard" class="active">
+      <i>dashboard</i>
+      <span>Dashboard</span>
+    </a>
+    <a data-view="orders">
+      <i>assignment</i>
+      <span>Orders</span>
+    </a>
+    <div class="divider"></div>
+    <a id="btn-new-repair-side">
+      <i>add_circle</i>
+      <span>New Repair</span>
+    </a>
+    <div class="max"></div>
+    <a id="btn-theme">
+      <i>dark_mode</i>
+      <span>Theme</span>
+    </a>
+  </nav>
+
+  <!-- ===== BOTTOM NAV (small) ===== -->
+  <nav class="bottom s">
+    <a data-view="dashboard" class="active">
+      <i>dashboard</i>
+      <span>Dashboard</span>
+    </a>
+    <a data-view="orders">
+      <i>assignment</i>
+      <span>Orders</span>
+    </a>
+    <a id="btn-new-repair-bottom">
+      <i>add_circle</i>
+      <span>New</span>
+    </a>
+    <a id="btn-theme-mobile">
+      <i>dark_mode</i>
+      <span>Theme</span>
+    </a>
+  </nav>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="responsive">
+
+    <!-- ===== DASHBOARD VIEW ===== -->
+    <div id="view-dashboard" class="view active">
+
+      <div class="row middle-align" style="margin-bottom:20px;">
+        <div>
+          <h5 class="no-margin">Dashboard</h5>
+          <div class="small-text" id="dashboard-timestamp">Loading...</div>
+        </div>
+        <div class="max"></div>
+      </div>
+
+      <div class="stats-grid" id="stats-grid">
+        <div class="card stat-card">
+          <div class="icon-wrap primary-container"><i class="primary-text">receipt_long</i></div>
+          <div>
+            <div class="stat-value" id="stat-total">0</div>
+            <div class="stat-label">Total Repairs</div>
+          </div>
+        </div>
+        <div class="card stat-card">
+          <div class="icon-wrap orange-container"><i class="orange-text">pending_actions</i></div>
+          <div>
+            <div class="stat-value" id="stat-open">0</div>
+            <div class="stat-label">Open / In Queue</div>
+          </div>
+        </div>
+        <div class="card stat-card">
+          <div class="icon-wrap blue-container"><i class="blue-text">sync</i></div>
+          <div>
+            <div class="stat-value" id="stat-progress">0</div>
+            <div class="stat-label">In Progress</div>
+          </div>
+        </div>
+        <div class="card stat-card">
+          <div class="icon-wrap green-container"><i class="green-text">check_circle</i></div>
+          <div>
+            <div class="stat-value" id="stat-complete">0</div>
+            <div class="stat-label">Completed</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="padding">
+          <div class="row middle-align">
+            <h6 class="no-margin">Recent Repairs</h6>
+            <div class="max"></div>
+            <button id="btn-view-all-orders" class="fill ripple">View All</button>
+          </div>
+        </div>
+        <div class="scroll-x">
+          <table class="stripes" id="recent-table">
+            <thead>
+              <tr><th>Customer</th><th>Device</th><th>Cost</th><th>Status</th><th>ETA</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="recent-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ORDERS VIEW ===== -->
+    <div id="view-orders" class="view">
+
+      <div class="row middle-align" style="margin-bottom:8px;">
+        <h5 class="no-margin">Orders & Repairs</h5>
+        <div class="max"></div>
+        <button id="btn-new-repair-orders" class="fill ripple">
+          <i>add</i>
+          <span>New Repair</span>
+        </button>
+      </div>
+
+      <div class="search-bar">
+        <div class="field label border prefix">
+          <i>search</i>
+          <input type="text" id="search-input" placeholder=" ">
+          <label>Search customer, device, ID…</label>
+        </div>
+      </div>
+
+      <div class="filter-chips" id="filter-chips"></div>
+
+      <div id="order-groups"></div>
+
+      <div class="empty-state" id="orders-empty" style="display:none;">
+        <i>inbox</i>
+        <div>No repairs match your search</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ===== CREATE DIALOG (supports single and bulk) ===== -->
+  <dialog id="dialog-create" class="medium">
+    <h5 style="margin: 0;">New Order</h5>
+    <p class="small-text">Add one or more repairs to the order</p>
+    <form class="dialog-form" id="form-create" autocomplete="off">
+      <div class="field label border">
+        <input type="text" id="create-customer" required>
+        <label>Customer Name</label>
+      </div>
+
+      <div id="repair-rows">
+        <div class="repair-row">
+          <div class="small-text repair-row-label" style="margin-bottom:8px;font-weight:600;">Repair #1</div>
+          <div class="field label border">
+            <input type="text" class="create-device" required>
+            <label>Device / Repair Description</label>
+          </div>
+          <div class="grid" style="gap:12px;">
+            <div class="s12 m6 field label border max">
+              <input type="number" step="0.01" min="0" class="create-cost" required>
+              <label>Repair Cost ($)</label>
+            </div>
+            <div class="s12 m6 field label border max">
+              <input type="text" class="create-eta" required>
+              <label>ETA (e.g. 24h, 3 days)</label>
+            </div>
+          </div>
+          <div class="grid" style="gap:12px;">
+            <div class="s12 m10 field label border max">
+              <select class="create-status">
+                <option value="">— Keep current —</option>
+                <option value="Picked-up">Picked-up</option>
+                <option value="Work in progress">Work in progress</option>
+                <option value="Picking up parts">Picking up parts</option>
+                <option value="Finished">Finished</option>
+              </select>
+              <label>Status</label>
+            </div>
+            <div class="s12 m2" style="display:flex;align-items:flex-end;padding-bottom:4px;">
+              <button class="circle transparent small btn-remove-repair" type="button" style="display:none;" title="Remove repair">
+                <i>close</i>
+              </button>
+            </div>
+          </div>
+          <div class="divider" style="margin:12px 0;"></div>
+        </div>
+      </div>
+
+      <button class="chip small ripple" id="btn-add-repair-row" type="button">
+        <i>add</i>
+        <span>Add another device</span>
+      </button>
+    </form>
+    <nav>
+      <button class="ripple" data-ui="#dialog-create">Cancel</button>
+      <button class="fill ripple" id="btn-create-save">Create Order</button>
+    </nav>
+  </dialog>
+
+  <!-- ===== EDIT DIALOG ===== -->
+  <dialog id="dialog-edit" class="medium">
+    <h5 style="margin: 0;">Update Repair</h5>
+    <p class="small-text" id="edit-subtitle">Fill in fields to change (leave blank to keep)</p>
+    <form class="dialog-form" id="form-edit" autocomplete="off">
+      <div class="grid" style="gap:12px;">
+        <div class="s12 m6 field label border max">
+          <input type="number" step="0.01" min="0" id="edit-cost">
+          <label>Repair Cost ($)</label>
+        </div>
+        <div class="s12 m6 field label border max">
+          <input type="text" id="edit-eta">
+          <label>ETA</label>
+        </div>
+      </div>
+      <div class="field label border">
+        <select id="edit-status">
+          <option value="">— Keep current —</option>
+          <option value="Picked-up">Picked-up</option>
+          <option value="Work in progress">Work in progress</option>
+          <option value="Picking up parts">Picking up parts</option>
+          <option value="Finished">Finished</option>
+        </select>
+        <label>Status</label>
+      </div>
+    </form>
+    <nav>
+      <button class="ripple" data-ui="#dialog-edit">Cancel</button>
+      <button class="fill ripple" id="btn-edit-save">Save Changes</button>
+    </nav>
+  </dialog>
+
+  <!-- ===== ADD REPAIR TO ORDER DIALOG ===== -->
+  <dialog id="dialog-add-repair" class="medium">
+    <h5 style="margin: 0;">Add Repair to Order</h5>
+    <p class="small-text" id="add-repair-order-label">Order: ...</p>
+    <form class="dialog-form" id="form-add-repair" autocomplete="off">
+      <div class="field label border">
+        <input type="text" id="add-repair-device" required>
+        <label>Device / Repair Description</label>
+      </div>
+      <div class="grid" style="gap:12px;">
+        <div class="s12 m6 field label border max">
+          <input type="number" step="0.01" min="0" id="add-repair-cost" required>
+          <label>Repair Cost ($)</label>
+        </div>
+        <div class="s12 m6 field label border max">
+          <input type="text" id="add-repair-eta" required>
+          <label>ETA (e.g. 24h, 3 days)</label>
+        </div>
+      </div>
+      <div class="field label border">
+        <select id="add-repair-status">
+          <option value="">— Keep current —</option>
+          <option value="Picked-up">Picked-up</option>
+          <option value="Work in progress">Work in progress</option>
+          <option value="Picking up parts">Picking up parts</option>
+          <option value="Finished">Finished</option>
+        </select>
+        <label>Initial Status</label>
+      </div>
+    </form>
+    <nav>
+      <button class="ripple" data-ui="#dialog-add-repair">Cancel</button>
+      <button class="fill ripple" id="btn-add-repair-save">Add Repair</button>
+    </nav>
+  </dialog>
+
+  <!-- ===== CLOSE DIALOG ===== -->
+  <dialog id="dialog-close" class="medium">
+    <h5 style="margin: 0;">Close Repair</h5>
+    <p id="close-message">Are you sure you want to close this repair?</p>
+    <div class="padding" style="background:var(--surface-variant);border-radius:12px;margin:12px 0;">
+      <div class="small-text" id="close-details"></div>
+    </div>
+    <nav>
+      <button class="ripple" data-ui="#dialog-close">Cancel</button>
+      <button class="fill green ripple" id="btn-close-confirm">Confirm Close</button>
+    </nav>
+  </dialog>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

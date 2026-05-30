@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backend Documentation - CC Order Tracking System</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f8f9fa;
+    --sidebar: #1e293b;
+    --sidebar-text: #cbd5e1;
+    --sidebar-active: #38bdf8;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --code-bg: #1e293b;
+    --code-text: #e2e8f0;
+    --green: #059669;
+    --orange: #d97706;
+    --red: #dc2626;
+    --radius: 8px;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    background: var(--sidebar);
+    color: var(--sidebar-text);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 1.5rem 0;
+  }
+  .sidebar h2 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0 1.25rem;
+    margin-bottom: 0.75rem;
+    color: #64748b;
+  }
+  .sidebar nav a {
+    display: block;
+    padding: 0.45rem 1.25rem;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    font-size: 0.875rem;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  .sidebar nav a:hover, .sidebar nav a:focus {
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+  }
+  .sidebar nav a.active { border-left-color: var(--sidebar-active); color: #fff; }
+  .sidebar nav .section-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 1rem 1.25rem 0.3rem;
+    color: #475569;
+    font-weight: 600;
+  }
+
+  /* Main */
+  .main { flex: 1; max-width: 960px; padding: 3rem 2.5rem; }
+  .main h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem; }
+  .main .subtitle { color: var(--text-muted); font-size: 1.05rem; margin-bottom: 2rem; }
+  .main h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 2.5rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border);
+  }
+  .main h3 { font-size: 1.1rem; font-weight: 600; margin: 1.5rem 0 0.75rem; }
+  .main p { margin-bottom: 1rem; color: #334155; }
+  .main ul, .main ol { margin-bottom: 1rem; padding-left: 1.5rem; color: #334155; }
+  .main li { margin-bottom: 0.3rem; }
+  .main a { color: var(--accent); text-decoration: none; }
+  .main a:hover { text-decoration: underline; }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .card-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; }
+
+  /* Code */
+  code {
+    font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+    font-size: 0.85em;
+  }
+  p code, li code {
+    background: #f1f5f9;
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    color: var(--red);
+  }
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: #f1f5f9;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+  }
+  tr:last-child td { border-bottom: none; }
+
+  /* Tags */
+  .tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .tag-get { background: #dbeafe; color: #1d4ed8; }
+  .tag-post { background: #d1fae5; color: #065f46; }
+  .tag-put { background: #fef3c7; color: #92400e; }
+  .tag-admin { background: #ede9fe; color: #5b21b6; }
+  .tag-customer { background: #fce7f3; color: #9d174d; }
+  .endpoint-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .endpoint-row code { font-size: 0.85rem; }
+
+  /* Badge */
+  .badge { display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.45rem; border-radius: 4px; }
+  .badge-yes { background: #d1fae5; color: #065f46; }
+  .badge-no { background: #fee2e2; color: #991b1b; }
+  .badge-info { background: #dbeafe; color: #1d40af; }
+
+  .method-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    min-width: 48px;
+    text-align: center;
+  }
+  .method-GET { background: #dbeafe; color: #1d4ed8; }
+  .method-POST { background: #d1fae5; color: #065f46; }
+  .method-PUT { background: #fef3c7; color: #92400e; }
+
+  .endpoint-block {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .endpoint-block h4 { font-size: 1rem; margin-bottom: 0.5rem; }
+  .endpoint-block .meta { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    body { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; position: static; padding: 1rem; }
+    .main { padding: 1.5rem; max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <h2>Documentation</h2>
+  <nav>
+    <a href="#overview">Overview</a>
+    <a href="#tech-stack">Tech Stack</a>
+    <a href="#project-structure">Project Structure</a>
+    <a href="#getting-started">Getting Started</a>
+    <a href="#database">Database Schema</a>
+
+    <div class="section-label">API Reference</div>
+    <a href="#api-base">Base</a>
+    <a href="#api-admin">Admin Endpoints</a>
+    <a href="#api-customer">Customer Endpoints</a>
+
+    <div class="section-label">Reference</div>
+    <a href="#models">Data Models</a>
+    <a href="#business-logic">Business Logic</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#configuration">Configuration</a>
+  </nav>
+</aside>
+
+<div class="main">
+
+<h1>CC Order Tracking System &mdash; Backend</h1>
+<p class="subtitle">FastAPI backend for the Computer Clinic order tracking platform.</p>
+
+<!-- ==================== OVERVIEW ==================== -->
+<h2 id="overview">Overview</h2>
+<p>
+  The backend for the <strong>Computer Clinic Order Tracking System</strong> provides a RESTful API
+  for managing and tracking device repair orders. It supports two classes of consumers:
+  <strong>Admin</strong> users who create, update, and close orders, and <strong>Customer</strong>
+  users who view the status of their orders.
+</p>
+<p>
+  Built with <strong>FastAPI</strong>, the service connects to an <strong>Apache Cassandra</strong>
+  database for durable, scalable storage. The API is automatically documented via OpenAPI at
+  <code>/docs</code> and <code>/redoc</code> when the server is running.
+</p>
+
+<!-- ==================== TECH STACK ==================== -->
+<h2 id="tech-stack">Tech Stack</h2>
+<table>
+  <thead>
+    <tr><th>Component</th><th>Technology</th><th>Version</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Web Framework</td><td>FastAPI</td><td>0.136.1</td></tr>
+    <tr><td>ASGI Server</td><td>Uvicorn</td><td>0.46.0</td></tr>
+    <tr><td>Language</td><td>Python</td><td>3.14</td></tr>
+    <tr><td>Data Validation</td><td>Pydantic</td><td>2.12.5</td></tr>
+    <tr><td>Database</td><td>Apache Cassandra</td><td>5.0.7</td></tr>
+    <tr><td>Cassandra Driver</td><td>cassandra-driver</td><td>3.30.0</td></tr>
+    <tr><td>Container Runtime</td><td>Docker (Compose)</td><td>&mdash;</td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== PROJECT STRUCTURE ==================== -->
+<h2 id="project-structure">Project Structure</h2>
+<pre><code>back-end/
+  main.py            # Application entry point
+  routes.py          # All API route definitions (APIRouter)
+  models.py          # Pydantic request/response schemas
+  database.py        # Cassandra connection manager
+  business_logic.py  # Helper functions
+  .gitignore
+  .venv/             # Python virtual environment
+  __pycache__/       # Bytecode cache (generated)
+
+db/
+  docker-compose.yaml   # Cassandra 5.0.7 container
+  init.cql              # CQL schema (keyspace &amp; table)</code></pre>
+
+<table>
+  <thead><tr><th>File</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><code>main.py</code></td><td>FastAPI app creation, CORS middleware, startup/shutdown lifecycle, router inclusion.</td></tr>
+    <tr><td><code>routes.py</code></td><td>Defines all REST endpoints on a single <code>APIRouter</code>.</td></tr>
+    <tr><td><code>models.py</code></td><td>Pydantic models for request bodies and data validation.</td></tr>
+    <tr><td><code>database.py</code></td><td><code>CassandraManager</code> singleton class for cluster connection and session management.</td></tr>
+    <tr><td><code>business_logic.py</code></td><td>Pure helper functions: <code>calculate_actual_hours</code> and <code>enrich_row</code>.</td></tr>
+    <tr><td><code>db/docker-compose.yaml</code></td><td>Docker Compose definition for the Cassandra container.</td></tr>
+    <tr><td><code>db/init.cql</code></td><td>Initial CQL statements to create the keyspace and table.</td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== GETTING STARTED ==================== -->
+<h2 id="getting-started">Getting Started</h2>
+
+<h3>Prerequisites</h3>
+<ul>
+  <li>Python 3.14+</li>
+  <li>Docker &amp; Docker Compose</li>
+</ul>
+
+<h3>Setup</h3>
+<ol>
+  <li>
+    <strong>Start Cassandra</strong>
+    <pre><code>cd db
+docker compose up -d</code></pre>
+  </li>
+  <li>
+    <strong>Activate the virtual environment</strong>
+    <pre><code>source .venv/bin/activate</code></pre>
+  </li>
+  <li>
+    <strong>Run the server</strong>
+    <pre><code>uvicorn main:app --reload --host 0.0.0.0 --port 8000</code></pre>
+  </li>
+</ol>
+<p>The API will be available at <code>http://localhost:8000</code>. Interactive docs at <code>http://localhost:8000/docs</code>.</p>
+
+<!-- ==================== DATABASE ==================== -->
+<h2 id="database">Database Schema</h2>
+
+<h3>Keyspace</h3>
+<table>
+  <thead><tr><th>Property</th><th>Value</th></tr></thead>
+  <tbody>
+    <tr><td>Name</td><td><code>order_keyspace</code></td></tr>
+    <tr><td>Replication</td><td><code>SimpleStrategy</code>, replication factor <code>1</code></td></tr>
+  </tbody>
+</table>
+
+<h3>Table: <code>order_tracking</code></h3>
+<p>Each row represents one repair line-item within an order. An order may span multiple rows (same <code>order_id</code>, different <code>repair_id</code>).</p>
+
+<table>
+  <thead>
+    <tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>order_id</code></td><td><code>UUID</code></td><td>PARTITION KEY</td><td>Random UUIDv4, generated on creation</td></tr>
+    <tr><td><code>repair_id</code></td><td><code>TIMEUUID</code></td><td>CLUSTERING KEY (ASC)</td><td>Time-based UUIDv1</td></tr>
+    <tr><td><code>customer_name</code></td><td><code>text</code></td><td></td><td></td></tr>
+    <tr><td><code>repair_device</code></td><td><code>text</code></td><td></td><td></td></tr>
+    <tr><td><code>order_creation</code></td><td><code>TIMEUUID</code></td><td></td><td>Time-based UUIDv1</td></tr>
+    <tr><td><code>repair_cost</code></td><td><code>decimal</code></td><td></td><td></td></tr>
+    <tr><td><code>repair_start</code></td><td><code>timestamp</code></td><td></td><td>Nullable</td></tr>
+    <tr><td><code>repair_finish</code></td><td><code>timestamp</code></td><td></td><td>Nullable</td></tr>
+    <tr><td><code>repair_status</code></td><td><code>text</code></td><td></td><td>Enumerated string (see below)</td></tr>
+    <tr><td><code>repair_eta</code></td><td><code>text</code></td><td></td><td></td></tr>
+  </tbody>
+</table>
+
+<p><strong>Primary key:</strong> <code>(order_id, repair_id)</code> &mdash; clustered by <code>repair_id ASC</code>.</p>
+
+<h3>Valid Status Values</h3>
+<table>
+  <thead><tr><th>Status</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>Picked-up</code></td><td>Device has been received by the clinic</td></tr>
+    <tr><td><code>Work in progress</code></td><td>Repair is currently underway</td></tr>
+    <tr><td><code>picking up parts</code></td><td>Waiting for replacement parts</td></tr>
+    <tr><td><code>Finished</code></td><td>Repair is complete</td></tr>
+    <tr><td><code>Closed</code></td><td>Order is closed (customer notified)</td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== API REFERENCE ==================== -->
+<h2 id="api-base">API Reference &mdash; Base</h2>
+
+<div class="endpoint-block">
+  <h4><span class="method-badge method-GET">GET</span> <code>/</code></h4>
+  <p>Root endpoint. Returns a welcome message to verify the service is running.</p>
+  <pre><code>{
+  "message": "Welcome to the Order Tracking System API!"
+}</code></pre>
+</div>
+
+<h2 id="api-admin">Admin Endpoints</h2>
+<p>Endpoints prefixed with <code>/admin</code> for order management.</p>
+
+<!-- GET /admin/vieworders -->
+<div class="endpoint-block">
+  <h4><span class="method-badge method-GET">GET</span> <code>/admin/vieworders</code></h4>
+  <p>List all orders. Returns every row from the <code>order_tracking</code> table.</p>
+  <p><strong>Response:</strong> Array of enriched order objects.</p>
+  <pre><code>[
+  {
+    "order_id": "550e8400-e29b...",
+    "repair_id": "6ba7b810-9dad...",
+    "customer_name": "Jane Doe",
+    "repair_device": "MacBook Pro",
+    "order_creation": "2026-01-15 10:30:00",
+    "repair_cost": "150.00",
+    "repair_start": "2026-01-15 10:30:00",
+    "repair_finish": null,
+    "repair_status": "Work in progress",
+    "repair_eta": "2026-01-20",
+    "actual_hours": null
+  }
+]</code></pre>
+</div>
+
+<!-- GET /admin/vieworders/{order_id} -->
+<div class="endpoint-block">
+  <h4><span class="method-badge method-GET">GET</span> <code>/admin/vieworders/{order_id}</code></h4>
+  <p>Get all repairs for a specific order.</p>
+  <table>
+    <thead><tr><th>Parameter</th><th>Type</th></tr></thead>
+    <tbody><tr><td><code>order_id</code></td><td>path &mdash; UUID string</td></tr></tbody>
+  </table>
+  <p><strong>Response:</strong> Array of enriched repair objects for the given order.</p>
+</div>
+
+<!-- PUT /admin/updateorder/{order_id} -->
+<div class="endpoint-block">
+  <h4><span class="method-badge method-PUT">PUT</span> <code>/admin/updateorder/{order_id}</code></h4>
+  <p>Update a specific repair within an order. If <code>repair_status</code> is set to <code>"Finished"</code>, <code>repair_finish</code> is automatically set to the current timestamp.</p>
+  <table>
+    <thead><tr><th>Parameter</th><th>Type</th><th>Required</th></tr></thead>
+    <tbody>
+      <tr><td><code>order_id</code></td><td>path</td><td>yes</td></tr>
+      <tr><td><code>repair_id</code></td><td>query</td><td>yes</td></tr>
+      <tr><td><code>repair_status</code></td><td>query</td><td>no</td></tr>
+      <tr><td><code>repair_cost</code></td><td>query</td><td>no</td></tr>
+      <tr><td><code>repair_eta</code></td><td>query</td><td>no</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Response:</strong> <code>{"message": "Order updated successfully"}</code></p>
+</div>
+
+<!-- POST /admin/createorders -->
+<div class="endpoint-block">
+  <h4><span class="method-badge method-POST">POST</span> <code>/admin/createorders</code></h4>
+  <p>Create a new order with one or more repair items. Generates UUIDs for <code>order_id</code>, <code>repair_id</code> (per item), and <code>order_creation</code>.</p>
+
+  <p><strong>Request body:</strong></p>
+  <pre><code>{
+  "customer_name": "Jane Doe",
+  "repairs": [
+    {
+      "repair_device": "MacBook Pro",
+      "repair_cost": 150.00,
+      "repair_start": "2026-01-15T10:30:00",
+      "repair_finish": null,
+      "repair_status": "Picked-up",
+      "repair_eta": "2026-01-20"
+    }
+  ]
+}</code></pre>
+  <p><strong>Response:</strong> <code>{"message": "Order created successfully", "order_id": "550e8400-e29b..."}</code></p>
+</div>
+
+<!-- POST /admin/addrepair/{order_id} -->
+<div class="endpoint-block">
+  <h4><span class="method-badge method-POST">POST</span> <code>/admin/addrepair/{order_id}</code></h4>
+  <p>Add a single repair to an existing order. Validates that the order exists before inserting.</p>
+  <table>
+    <thead><tr><th>Parameter</th><th>Type</th></tr></thead>
+    <tbody><tr><td><code>order_id</code></td><td>path &mdash; UUID string</td></tr></tbody>
+  </table>
+
+  <p><strong>Request body:</strong></p>
+  <pre><code>{
+  "repair_device": "iPhone 14",
+  "repair_cost": 89.00,
+  "repair_start": null,
+  "repair_finish": null,
+  "repair_status": "Picked-up",
+  "repair_eta": "2026-01-22"
+}</code></pre>
+  <p><strong>Response:</strong> <code>{"message": "Repair added successfully to order {order_id}"}</code></p>
+</div>
+
+<!-- PUT /admin/closeorder/{order_id} -->
+<div class="endpoint-block">
+  <h4><span class="method-badge method-PUT">PUT</span> <code>/admin/closeorder/{order_id}</code></h4>
+  <p>Close a specific repair within an order. Sets <code>repair_status</code> to <code>"Closed"</code> and <code>repair_finish</code> to the current timestamp.</p>
+  <table>
+    <thead><tr><th>Parameter</th><th>Type</th><th>Required</th></tr></thead>
+    <tbody>
+      <tr><td><code>order_id</code></td><td>path</td><td>yes</td></tr>
+      <tr><td><code>repair_id</code></td><td>query</td><td>yes</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Response:</strong> <code>{"message": "Order closed successfully"}</code></p>
+</div>
+
+<h2 id="api-customer">Customer Endpoints</h2>
+<p>Endpoints prefixed with <code>/customer</code> for order viewing.</p>
+
+<!-- GET /customer/vieworders/{order_id} -->
+<div class="endpoint-block">
+  <h4><span class="method-badge method-GET">GET</span> <code>/customer/vieworders/{order_id}</code></h4>
+  <p>View an order's repairs by order ID. Returns a subset of fields suitable for customer display. If the repair status is <code>"Closed"</code>, returns <code>"This order has been closed."</code> instead.</p>
+  <table>
+    <thead><tr><th>Parameter</th><th>Type</th></tr></thead>
+    <tbody><tr><td><code>order_id</code></td><td>path &mdash; UUID string</td></tr></tbody>
+  </table>
+  <p><strong>Response:</strong> Array of objects with limited fields (does not expose costs).</p>
+  <pre><code>[
+  {
+    "order_id": "550e8400-e29b...",
+    "customer_name": "Jane Doe",
+    "repair_device": "MacBook Pro",
+    "repair_status": "Work in progress",
+    "repair_eta": "2026-01-20"
+  }
+]</code></pre>
+</div>
+
+<!-- ==================== DATA MODELS ==================== -->
+<h2 id="models">Data Models</h2>
+<p>Pydantic schemas used for request validation and type safety.</p>
+
+<div class="card">
+  <div class="card-title">RepairItem</div>
+  <p>Used in bulk order creation.</p>
+  <table>
+    <thead><tr><th>Field</th><th>Type</th><th>Required</th></tr></thead>
+    <tbody>
+      <tr><td><code>repair_device</code></td><td><code>str</code></td><td><span class="badge badge-yes">yes</span></td></tr>
+      <tr><td><code>repair_cost</code></td><td><code>Decimal</code></td><td><span class="badge badge-yes">yes</span></td></tr>
+      <tr><td><code>repair_start</code></td><td><code>Optional[datetime]</code></td><td><span class="badge badge-no">no</span></td></tr>
+      <tr><td><code>repair_finish</code></td><td><code>Optional[datetime]</code></td><td><span class="badge badge-no">no</span></td></tr>
+      <tr><td><code>repair_status</code></td><td><code>str</code></td><td><span class="badge badge-yes">yes</span></td></tr>
+      <tr><td><code>repair_eta</code></td><td><code>str</code></td><td><span class="badge badge-yes">yes</span></td></tr>
+    </tbody>
+  </table>
+  <p><strong>Status validation:</strong> <code>^(Picked-up|Work in progress|picking up parts|Finished|Closed)$</code></p>
+</div>
+
+<div class="card">
+  <div class="card-title">BulkOrderCreate</div>
+  <p>Request body for <code>POST /admin/createorders</code>.</p>
+  <table>
+    <thead><tr><th>Field</th><th>Type</th><th>Required</th></tr></thead>
+    <tbody>
+      <tr><td><code>customer_name</code></td><td><code>str</code></td><td><span class="badge badge-yes">yes</span></td></tr>
+      <tr><td><code>repairs</code></td><td><code>list[RepairItem]</code></td><td><span class="badge badge-yes">yes</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <div class="card-title">AddRepairRequest</div>
+  <p>Request body for <code>POST /admin/addrepair/{order_id}</code>. Same fields as <code>RepairItem</code>.</p>
+  <table>
+    <thead><tr><th>Field</th><th>Type</th><th>Required</th></tr></thead>
+    <tbody>
+      <tr><td><code>repair_device</code></td><td><code>str</code></td><td><span class="badge badge-yes">yes</span></td></tr>
+      <tr><td><code>repair_cost</code></td><td><code>Decimal</code></td><td><span class="badge badge-yes">yes</span></td></tr>
+      <tr><td><code>repair_start</code></td><td><code>Optional[datetime]</code></td><td><span class="badge badge-no">no</span></td></tr>
+      <tr><td><code>repair_finish</code></td><td><code>Optional[datetime]</code></td><td><span class="badge badge-no">no</span></td></tr>
+      <tr><td><code>repair_status</code></td><td><code>str</code></td><td><span class="badge badge-yes">yes</span></td></tr>
+      <tr><td><code>repair_eta</code></td><td><code>str</code></td><td><span class="badge badge-yes">yes</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ==================== BUSINESS LOGIC ==================== -->
+<h2 id="business-logic">Business Logic</h2>
+
+<div class="card">
+  <div class="card-title"><code>calculate_actual_hours(start, finish)</code></div>
+  <p>Computes the elapsed time between <code>repair_start</code> and <code>repair_finish</code>. Returns the difference in hours (rounded to 2 decimal places). Returns <code>None</code> if either timestamp is missing.</p>
+  <pre><code>def calculate_actual_hours(start, finish):
+    if not start or not finish:
+        return None
+    return round((finish - start).total_seconds() / 3600, 2)</code></pre>
+</div>
+
+<div class="card">
+  <div class="card-title"><code>enrich_row(row)</code></div>
+  <p>Takes a raw Cassandra row, converts it to a dict via <code>_asdict()</code>, and attaches the <code>actual_hours</code> key computed from <code>calculate_actual_hours</code>. Used in admin endpoints to provide additional context.</p>
+</div>
+
+<!-- ==================== ARCHITECTURE ==================== -->
+<h2 id="architecture">Architecture</h2>
+
+<h3>Application Lifecycle</h3>
+<ol>
+  <li><strong>Startup:</strong> FastAPI creates the app, registers CORS middleware, then the <code>startup</code> event connects to Cassandra and ensures the keyspace exists.</li>
+  <li><strong>Routing:</strong> All routes from <code>routes.py</code> are included via <code>app.include_router(router)</code>.</li>
+  <li><strong>Shutdown:</strong> The <code>shutdown</code> event closes the Cassandra cluster connection.</li>
+</ol>
+
+<h3>CORS Middleware</h3>
+<p>Configured to allow requests from both frontend applications:</p>
+<pre><code>allow_origins = ["http://localhost:3000", "http://localhost:3001"]
+allow_credentials = True
+allow_methods = ["*"]
+allow_headers = ["*"]</code></pre>
+
+<h3>Database Connection</h3>
+<p>The <code>CassandraManager</code> class (in <code>database.py</code>) is a singleton that manages a single cluster connection. The session is provided to route handlers via a FastAPI dependency <code>get_cassandra_session()</code>.</p>
+
+<h3>UUID Generation</h3>
+<table>
+  <thead><tr><th>Field</th><th>Type</th><th>Generation</th></tr></thead>
+  <tbody>
+    <tr><td><code>order_id</code></td><td>UUIDv4 (random)</td><td><code>uuid.uuid4()</code></td></tr>
+    <tr><td><code>repair_id</code></td><td>UUIDv1 (time-based)</td><td><code>uuid.uuid1()</code></td></tr>
+    <tr><td><code>order_creation</code></td><td>UUIDv1 (time-based)</td><td><code>uuid.uuid1()</code></td></tr>
+  </tbody>
+</table>
+
+<h3>Security Notes</h3>
+<ul>
+  <li>There is currently <strong>no authentication or authorization</strong>. Admin and Customer paths are separated by URL convention only.</li>
+  <li>CQL injection is mitigated via parameterized queries (<code>%s</code> placeholders).</li>
+  <li>No rate-limiting, request logging, or API key checks are in place.</li>
+</ul>
+
+<!-- ==================== CONFIGURATION ==================== -->
+<h2 id="configuration">Configuration</h2>
+<p>All configuration values are currently hardcoded. Below is a reference for where each value is set.</p>
+
+<table>
+  <thead><tr><th>Setting</th><th>Value</th><th>Location</th></tr></thead>
+  <tbody>
+    <tr><td>Database host</td><td><code>localhost</code></td><td><code>main.py</code> startup event</td></tr>
+    <tr><td>Database port</td><td><code>9042</code></td><td><code>database.py</code> &mdash; Cluster() call</td></tr>
+    <tr><td>Keyspace name</td><td><code>order_keyspace</code></td><td><code>main.py</code> &amp; <code>database.py</code></td></tr>
+    <tr><td>CORS origins</td><td><code>localhost:3000, localhost:3001</code></td><td><code>main.py</code></td></tr>
+    <tr><td>Cassandra container image</td><td><code>cassandra:5.0.7</code></td><td><code>db/docker-compose.yaml</code></td></tr>
+    <tr><td>Container port mapping</td><td><code>9042:9042</code></td><td><code>db/docker-compose.yaml</code></td></tr>
+  </tbody>
+</table>
+
+<hr style="margin: 3rem 0 1rem; border: none; border-top: 1px solid var(--border);">
+<p style="color: var(--text-muted); font-size: 0.85rem;">
+  Generated from codebase &mdash; May 2026 &mdash; 
+  <em>CC Order Tracking System Backend</em>
+</p>
+
+</div>
+</body>
+</html>
