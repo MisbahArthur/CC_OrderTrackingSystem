@@ -2,13 +2,14 @@ import datetime
 import uuid
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
-from database import get_cassandra_session
+from sqlalchemy.orm import Session
+from database import  get_database
 from business_logic import enrich_row
-from models import OrderTracking, BulkOrderCreate, AddRepairRequest
+from models import  BulkOrderCreate, AddRepairRequest, OrderTrackingDB
 
 router = APIRouter()
 
-#Base endpoint
+# Base endpoint
 @router.get("/")
 def read_root():
     return {"message": "Welcome to the Order Tracking System API!"}
@@ -16,102 +17,115 @@ def read_root():
 
 # Admin endpoints
 @router.get("/admin/vieworders")
-def get_orders(session=Depends(get_cassandra_session)):
-    rows = session.execute("SELECT * FROM order_tracking")
+def get_orders(session: Session = Depends(get_database)):
+    rows = session.query(OrderTrackingDB).all()
     return [enrich_row(row) for row in rows]
 
 @router.get("/admin/vieworders/{order_id}")
-def get_order_repairs(order_id: str, session=Depends(get_cassandra_session)):
-    rows = session.execute(
-        "SELECT * FROM order_tracking WHERE order_id = %s", (uuid.UUID(order_id),)
-    )
-    result = [enrich_row(row) for row in rows]
-    if not result:
+def get_order_repairs(order_id: str, session: Session = Depends(get_database)):
+    rows = session.query(OrderTrackingDB).filter(OrderTrackingDB.order_id == order_id).all()
+    if not rows:
         return {"message": "No repairs found for this order"}
-    return result
+    return [enrich_row(row) for row in rows]
+    
 
 @router.put("/admin/updateorder/{order_id}")
 def update_order(order_id: str, repair_id: str, repair_status: Optional[str] = None,
-                  repair_cost: Optional[float] = None, repair_eta: Optional[str] = None,
-                  session=Depends(get_cassandra_session)):
-    current_time = datetime.datetime.now().replace(microsecond=0)
-    if repair_status == "Finished":
-        session.execute(
-            "UPDATE order_tracking SET repair_status = %s, repair_cost = %s, repair_eta = %s, repair_finish = %s WHERE order_id = %s AND repair_id = %s",
-            (repair_status, repair_cost, repair_eta, current_time, uuid.UUID(order_id), uuid.UUID(repair_id))
-        )
-    else:
-        session.execute(
-            "UPDATE order_tracking SET repair_status = %s, repair_cost = %s, repair_eta = %s WHERE order_id = %s AND repair_id = %s",
-            (repair_status, repair_cost, repair_eta, uuid.UUID(order_id), uuid.UUID(repair_id))
-        )
-    return {"message": f"Order {order_id} repair {repair_id} updated"}
+                    repair_cost: Optional[float] = None, repair_eta: Optional[str] = None, session: Session = Depends(get_database)):
+        current_time = datetime.datetime.now().replace(microsecond=0)
+
+        repair = session.query(OrderTrackingDB).filter(
+            OrderTrackingDB.order_id == order_id, 
+            OrderTrackingDB.repair_id == repair_id
+        ).first()
+        if not repair:
+            raise HTTPException(status_code=404, detail="Repair not found")
+        
+        if repair_status:
+            repair.repair_status = repair_status
+        if repair_cost:
+            repair.repair_cost = repair_cost
+        if repair_eta:
+            repair.repair_eta = repair_eta
+        
+        if repair_status == "Finished":
+            repair.repair_finish = current_time
+
+        session.commit()
+        return {"message": f"Order {order_id} repair {repair_id} has been successfully updated"}
 
 @router.post("/admin/createorders")
-def create_orders_bulk(order: BulkOrderCreate, session=Depends(get_cassandra_session)):
+def create_orders_bulk(order: BulkOrderCreate, session: Session = Depends(get_database)):
     new_order_id = uuid.uuid4()
-    creation_time = uuid.uuid1()
     current_time = datetime.datetime.now()
+    creation_time = datetime.datetime.now()
     repair_ids = []
 
-    query = """
-        INSERT INTO order_tracking (order_id, repair_id, customer_name, repair_device, order_creation, repair_cost, repair_start, repair_finish, repair_status, repair_eta) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """
-
-    for repair in order.repairs:
-        new_repair_id = uuid.uuid1()
-        session.execute(query, (new_order_id, new_repair_id, order.customer_name, repair.repair_device, creation_time, repair.repair_cost, current_time, None, repair.repair_status, repair.repair_eta))
-        repair_ids.append(str(new_repair_id))
-
-    return {
-        "message": "Order created successfully",
-        "order_id": str(new_order_id),
-        "repair_ids": repair_ids
-    }
+    for repair_item in order.repairs:
+        new_repair_id = str(uuid.uuid4())
+        new_entry = OrderTrackingDB(
+            order_id=new_order_id,
+            repair_id=new_repair_id,
+            customer_name=order.customer_name,
+            repair_device=repair_item.repair_device,
+            repair_cost=repair_item.repair_cost,
+            repair_start=repair_item.repair_start or current_time,
+            repair_finish=repair_item.repair_finish,
+            repair_status=repair_item.repair_status,
+            repair_eta=repair_item.repair_eta
+        )
+        session.add(new_entry)
+        repair_ids.append(new_repair_id)
+    
+    session.commit()
+    return {"message": f"Order {new_order_id} with {len(order.repairs)} repairs has been successfully created", "order_id": new_order_id}
 
 @router.post("/admin/addrepair/{order_id}")
-def add_repair(order_id: str, repair: AddRepairRequest, session=Depends(get_cassandra_session)):
-    existing = session.execute(
-        "SELECT customer_name, order_creation FROM order_tracking WHERE order_id = %s LIMIT 1",
-        (uuid.UUID(order_id),)
-    ).one()
-    if not existing:
+def add_repair(order_id: str, repair: AddRepairRequest, session: Session = Depends(get_database)):
+    existing_order = session.query(OrderTrackingDB).filter(OrderTrackingDB.order_id == order_id).first()
+    if not existing_order:
         raise HTTPException(status_code=404, detail="Order not found")
-
-    new_repair_id = uuid.uuid1()
+    new_repair_id = uuid.uuid4()
     current_time = datetime.datetime.now()
-
-    query = """
-        INSERT INTO order_tracking (order_id, repair_id, customer_name, repair_device, order_creation, repair_cost, repair_start, repair_finish, repair_status, repair_eta) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """
-    session.execute(query, (uuid.UUID(order_id), new_repair_id, existing.customer_name, repair.repair_device, existing.order_creation, repair.repair_cost, current_time, None, repair.repair_status, repair.repair_eta))
-
-    return {
-        "message": "Repair added to order successfully",
-        "order_id": order_id,
-        "repair_id": str(new_repair_id)
-    }
+    new_entry = OrderTrackingDB(
+        order_id=order_id,
+        repair_id=new_repair_id,
+        customer_name=existing_order.customer_name,
+        repair_device=repair.repair_device,
+        repair_cost=repair.repair_cost,
+        repair_start=repair.repair_start or current_time,
+        repair_finish=repair.repair_finish,
+        repair_status=repair.repair_status,
+        repair_eta=repair.repair_eta
+    )
+    session.add(new_entry)
+    session.commit()
+    return {"message": f"Repair {new_repair_id} has been successfully added to order {order_id}", "repair_id": new_repair_id}
 
 @router.put("/admin/closeorder/{order_id}")
-def close_order(order_id: str, repair_id: str, session=Depends(get_cassandra_session)):
+def close_order(order_id: str, session: Session = Depends(get_database)):
     current_time = datetime.datetime.now().replace(microsecond=0)
-    session.execute(
-        "UPDATE order_tracking SET repair_status = %s, repair_finish = %s WHERE order_id = %s AND repair_id = %s",
-        ("Closed", current_time, uuid.UUID(order_id), uuid.UUID(repair_id))
-    )
-    return {"message": f"Order {order_id} repair {repair_id} has been successfully closed"}
-
+    repair = session.query(OrderTrackingDB).filter(OrderTrackingDB.order_id == order_id).first()
+    if not repair:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    repair.repair_status = "Closed"
+    repair.repair_finish = current_time
+    session.commit()
+    return {"message": f"Order {order_id} has been successfully closed"}
 
 # customer endpoints
 @router.get("/customer/vieworders/{order_id}")
-def get_order_repairs(order_id: str, session=Depends(get_cassandra_session)):
-    rows = session.execute(
-        "SELECT order_id, repair_id, customer_name, repair_device, repair_cost, repair_status, repair_eta FROM order_tracking WHERE order_id = %s", (uuid.UUID(order_id),)
-    )
+def get_customer_order_repairs(order_id: str, session: Session = Depends(get_database)):
+    rows = session.query(OrderTrackingDB).filter(OrderTrackingDB.order_id == order_id).all()
     result = [enrich_row(row) for row in rows]
-    closed= [row for row in result if row['repair_status'] == 'Closed']
+    
+    closed = [row for row in result if row["repair_status"] == "Closed"]
     if closed:
         return {"message": "This order has been closed."}
     elif not result:
         return {"message": "No repairs found for this order"}
+    
+    allowed_keys = {"order_id", "repair_id", "customer_name", "repair_device", "repair_cost", "repair_status", "repair_eta", "actual_hours"}
+    result = [{key: row[key] for key in allowed_keys} for row in result]
     return result

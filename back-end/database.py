@@ -1,29 +1,27 @@
-from cassandra.cluster import Cluster
-from cassandra.io.asyncioreactor import AsyncioConnection
-class CassandraManager:
-    def __init__(self):
-        self.session = None
-        self.cluster = None
+from sqlalchemy import create_engine
+from urllib.parse import quote_plus
+from sqlalchemy.orm import declarative_base, sessionmaker
 
-    def connect(self, nodes=["localhost"], keyspace="order_keyspace"):
-        self.nodes = nodes
-        self.keyspace = keyspace
 
-        self.cluster = Cluster(self.nodes, port=9042)
-        self.session = self.cluster.connect()
-        self.session.execute(f"""
-            CREATE KEYSPACE IF NOT EXISTS {self.keyspace}
-            WITH replication = {{'class': 'SimpleStrategy', 'replication_factor': 1}}
-        """)
-        self.session.set_keyspace(self.keyspace)
-        print(f"Connected to Cassandra cluster and using keyspace '{self.keyspace}'")
+# Your raw password
+raw_password = "Arthur@09"
 
-    def close(self):
-        if self.cluster:
-            self.cluster.shutdown()
+# Encode the password safely
+encoded_password = quote_plus(raw_password)
 
-db_manager = CassandraManager()
+# Construct the URI with the encoded password
+SQLALCHEMY_DATABASE_URL = f"postgresql+psycopg2://postgres:{encoded_password}@localhost/CC_Ordertracking"
 
-# Dependency to inject the session into routes
-def get_cassandra_session():
-    return db_manager.session
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+def get_database():
+    database = SessionLocal()
+    try:
+        yield database
+    finally:
+        database.close()
+
+def create_table():
+    Base.metadata.create_all(bind=engine)
