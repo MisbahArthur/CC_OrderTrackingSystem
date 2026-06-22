@@ -165,7 +165,7 @@
     <a href="#tech-stack">Tech Stack</a>
     <a href="#project-structure">Project Structure</a>
     <a href="#getting-started">Getting Started</a>
-    <a href="#keyspace">Keyspace</a>
+    <a href="#database">Database</a>
     <a href="#table">Table: order_tracking</a>
     <a href="#primary-key">Primary Key Design</a>
     <a href="#uuid-generation">UUID Generation</a>
@@ -179,15 +179,15 @@
 <div class="main">
 
 <h1>CC Order Tracking System &mdash; Database</h1>
-<p class="subtitle">Apache Cassandra 5.0.7 — durable, scalable storage layer.</p>
+<p class="subtitle">PostgreSQL 16 &mdash; reliable, ACID-compliant storage layer.</p>
 
 <!-- ==================== OVERVIEW ==================== -->
 <h2 id="overview">Overview</h2>
 <p>
-  The database layer for the <strong>CC Order Tracking System</strong> uses <strong>Apache Cassandra 5.0.7</strong> to store and manage repair order data. Cassandra provides high availability, linear scalability, and fault tolerance — suitable for a production order-tracking workload.
+  The database layer for the <strong>CC Order Tracking System</strong> uses <strong>PostgreSQL 16</strong> to store and manage repair order data. PostgreSQL provides ACID compliance, robust data integrity, and strong consistency &mdash; well-suited for an order-tracking workload.
 </p>
 <p>
-  The database runs inside a Docker container managed by Docker Compose. The schema is initialised automatically on first startup via a dedicated init container that executes a CQL script.
+  The database runs inside a Docker container managed by Docker Compose. The schema is initialised automatically via SQLAlchemy's <code>Base.metadata.create_all()</code> on backend startup, with an optional init script for manual setup.
 </p>
 
 <!-- ==================== TECH STACK ==================== -->
@@ -195,25 +195,27 @@
 <table>
   <thead><tr><th>Component</th><th>Technology</th><th>Version</th></tr></thead>
   <tbody>
-    <tr><td>Database</td><td>Apache Cassandra</td><td>5.0.7</td></tr>
-    <tr><td>Query Language</td><td>CQL (Cassandra Query Language)</td><td>&mdash;</td></tr>
+    <tr><td>Database</td><td>PostgreSQL</td><td>16</td></tr>
+    <tr><td>ORM</td><td>SQLAlchemy</td><td>&mdash;</td></tr>
+    <tr><td>DB Driver</td><td>psycopg2-binary</td><td>&mdash;</td></tr>
     <tr><td>Container Runtime</td><td>Docker Compose</td><td>&mdash;</td></tr>
-    <tr><td>Base Image</td><td><code>cassandra:5.0.7</code></td><td>&mdash;</td></tr>
-    <tr><td>Python Driver</td><td><code>cassandra-driver</code></td><td>3.30.0</td></tr>
+    <tr><td>Base Image</td><td><code>postgres:16</code></td><td>&mdash;</td></tr>
   </tbody>
 </table>
 
 <!-- ==================== PROJECT STRUCTURE ==================== -->
 <h2 id="project-structure">Project Structure</h2>
 <pre><code>db/
-  docker-compose.yaml   # Cassandra 5.0.7 container definition
-  init.cql              # CQL schema (keyspace &amp; table)</code></pre>
+  docker-compose.yaml   # PostgreSQL 16 container definition
+  init.cql              # Legacy Cassandra schema (kept for reference)
+  init.sql              # PostgreSQL schema (manual setup alternative)</code></pre>
 
 <table>
   <thead><tr><th>File</th><th>Purpose</th></tr></thead>
   <tbody>
-    <tr><td><code>docker-compose.yaml</code></td><td>Defines the Cassandra service and init container with health checks, persistent volumes, and environment configuration.</td></tr>
-    <tr><td><code>init.cql</code></td><td>Contains the CQL statements to create the <code>order_keyspace</code> keyspace and the <code>order_tracking</code> table. Executed automatically on first startup.</td></tr>
+    <tr><td><code>docker-compose.yaml</code></td><td>Defines the PostgreSQL service and init container with health checks, persistent volumes, and environment configuration.</td></tr>
+    <tr><td><code>init.sql</code></td><td>Contains the SQL statements to create the <code>order_tracking</code> table. Provided for manual setup; the backend can auto-create tables via SQLAlchemy.</td></tr>
+    <tr><td><code>init.cql</code></td><td>Legacy Cassandra schema — kept for historical reference, not used by the current stack.</td></tr>
   </tbody>
 </table>
 
@@ -235,33 +237,28 @@ docker compose up -d</code></pre>
   <li>
     <strong>Verify the container is healthy</strong>
     <pre><code>docker compose ps</code></pre>
-    <p>Wait until <code>cassandra_node</code> shows <code>healthy</code> in the status column. The init container (<code>cassandra_init_script</code>) will run automatically after health checks pass.</p>
+    <p>Wait until <code>postgres_node</code> shows <code>healthy</code> in the status column. The init container (<code>postgres_init</code>) will run automatically after health checks pass.</p>
   </li>
   <li>
     <strong>Verify the schema was loaded</strong>
-    <pre><code>docker exec cassandra_node cqlsh -e "
-  USE order_keyspace;
-  DESCRIBE TABLES;
-  SELECT * FROM order_tracking LIMIT 5;
-"</code></pre>
+    <pre><code>docker exec postgres_node psql -U postgres -d CC_Ordertracking -c "\dt"
+docker exec postgres_node psql -U postgres -d CC_Ordertracking -c "SELECT * FROM order_tracking LIMIT 5;"</code></pre>
   </li>
 </ol>
 
-<!-- ==================== KEYSPACE ==================== -->
-<h2 id="keyspace">Keyspace</h2>
-<p>A single keyspace <code>order_keyspace</code> holds all order-tracking data.</p>
+<!-- ==================== DATABASE ==================== -->
+<h2 id="database">Database</h2>
+<p>A single database <code>CC_Ordertracking</code> holds all order-tracking data. The database is created automatically by the <code>POSTGRES_DB</code> environment variable in Docker Compose.</p>
 
 <table>
   <thead><tr><th>Property</th><th>Value</th></tr></thead>
   <tbody>
-    <tr><td>Name</td><td><code>order_keyspace</code></td></tr>
-    <tr><td>Replication Strategy</td><td><code>SimpleStrategy</code></td></tr>
-    <tr><td>Replication Factor</td><td><code>1</code></td></tr>
-    <tr><td>Creation CQL</td><td><code>CREATE KEYSPACE IF NOT EXISTS order_keyspace WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };</code></td></tr>
+    <tr><td>Name</td><td><code>CC_Ordertracking</code></td></tr>
+    <tr><td>User</td><td><code>postgres</code></td></tr>
+    <tr><td>Port</td><td><code>5432</code></td></tr>
+    <tr><td>Creation</td><td>Automatic via <code>POSTGRES_DB</code> env var in Docker Compose</td></tr>
   </tbody>
 </table>
-
-<p>In production, increase the replication factor to <code>3</code> (or more) and consider using <code>NetworkTopologyStrategy</code> for multi-datacenter deployments.</p>
 
 <!-- ==================== TABLE ==================== -->
 <h2 id="table">Table: <code>order_tracking</code></h2>
@@ -270,64 +267,56 @@ docker compose up -d</code></pre>
 <table>
   <thead><tr><th>Column</th><th>Type</th><th>Key</th><th>Required</th><th>Notes</th></tr></thead>
   <tbody>
-    <tr><td><code>order_id</code></td><td><code>UUID</code></td><td>PARTITION KEY</td><td><span class="badge badge-yes">yes</span></td><td>Random UUIDv4, generated on creation</td></tr>
-    <tr><td><code>repair_id</code></td><td><code>TIMEUUID</code></td><td>CLUSTERING KEY (ASC)</td><td><span class="badge badge-yes">yes</span></td><td>Time-based UUIDv1, unique per repair item</td></tr>
-    <tr><td><code>customer_name</code></td><td><code>text</code></td><td></td><td><span class="badge badge-yes">yes</span></td><td></td></tr>
-    <tr><td><code>repair_device</code></td><td><code>text</code></td><td></td><td><span class="badge badge-yes">yes</span></td><td>Device description (e.g. "MacBook Pro 14")</td></tr>
-    <tr><td><code>order_creation</code></td><td><code>TIMEUUID</code></td><td></td><td><span class="badge badge-yes">yes</span></td><td>Time-based UUIDv1, set when the order is created</td></tr>
-    <tr><td><code>repair_cost</code></td><td><code>decimal</code></td><td></td><td><span class="badge badge-yes">yes</span></td><td>Monetary amount</td></tr>
-    <tr><td><code>repair_start</code></td><td><code>timestamp</code></td><td></td><td><span class="badge badge-no">no</span></td><td>When repair work began (nullable)</td></tr>
-    <tr><td><code>repair_finish</code></td><td><code>timestamp</code></td><td></td><td><span class="badge badge-no">no</span></td><td>When repair work finished (nullable)</td></tr>
-    <tr><td><code>repair_status</code></td><td><code>text</code></td><td></td><td><span class="badge badge-yes">yes</span></td><td>Enumerated string (see status values below)</td></tr>
-    <tr><td><code>repair_eta</code></td><td><code>text</code></td><td></td><td><span class="badge badge-yes">yes</span></td><td>Estimated completion time (human-readable)</td></tr>
+    <tr><td><code>order_id</code></td><td><code>UUID</code></td><td>PK</td><td><span class="badge badge-yes">yes</span></td><td>Random UUIDv4, generated on creation</td></tr>
+    <tr><td><code>repair_id</code></td><td><code>UUID</code></td><td>PK</td><td><span class="badge badge-yes">yes</span></td><td>Random UUIDv4, unique per repair item</td></tr>
+    <tr><td><code>customer_name</code></td><td><code>VARCHAR</code></td><td></td><td><span class="badge badge-yes">yes</span></td><td></td></tr>
+    <tr><td><code>repair_device</code></td><td><code>VARCHAR</code></td><td></td><td><span class="badge badge-yes">yes</span></td><td>Device description (e.g. "MacBook Pro 14")</td></tr>
+    <tr><td><code>repair_cost</code></td><td><code>NUMERIC</code></td><td></td><td><span class="badge badge-yes">yes</span></td><td>Monetary amount</td></tr>
+    <tr><td><code>repair_start</code></td><td><code>TIMESTAMP</code></td><td></td><td><span class="badge badge-no">no</span></td><td>When repair work began (nullable)</td></tr>
+    <tr><td><code>repair_finish</code></td><td><code>TIMESTAMP</code></td><td></td><td><span class="badge badge-no">no</span></td><td>When repair work finished (nullable)</td></tr>
+    <tr><td><code>repair_status</code></td><td><code>VARCHAR</code></td><td></td><td><span class="badge badge-yes">yes</span></td><td>Enumerated string (see status values below)</td></tr>
+    <tr><td><code>repair_eta</code></td><td><code>VARCHAR</code></td><td></td><td><span class="badge badge-yes">yes</span></td><td>Estimated completion time (human-readable)</td></tr>
   </tbody>
 </table>
 
-<p><strong>Creation CQL:</strong></p>
+<p><strong>Creation SQL:</strong></p>
 <pre><code>CREATE TABLE IF NOT EXISTS order_tracking (
-    order_id UUID,
-    repair_id TIMEUUID,
-    customer_name text,
-    repair_device text,
-    order_creation TIMEUUID,
-    repair_cost decimal,
-    repair_start timestamp,
-    repair_finish timestamp,
-    repair_status text,
-    repair_eta text,
+    order_id UUID NOT NULL,
+    repair_id UUID NOT NULL,
+    customer_name VARCHAR,
+    repair_device VARCHAR,
+    repair_cost NUMERIC,
+    repair_start TIMESTAMP,
+    repair_finish TIMESTAMP,
+    repair_status VARCHAR,
+    repair_eta VARCHAR,
     PRIMARY KEY (order_id, repair_id)
-) WITH CLUSTERING ORDER BY (repair_id ASC);</code></pre>
+);</code></pre>
 
 <!-- ==================== PRIMARY KEY ==================== -->
 <h2 id="primary-key">Primary Key Design</h2>
 
 <div class="card">
-  <div class="card-title">Partition Key: <code>order_id</code></div>
-  <p>A single order is stored as one Cassandra partition. All repairs belonging to the same order reside in the same partition, enabling efficient single-order queries. Queries filtering by <code>order_id</code> hit exactly one partition.</p>
-</div>
-
-<div class="card">
-  <div class="card-title">Clustering Key: <code>repair_id ASC</code></div>
-  <p>Within a partition, rows are ordered by <code>repair_id</code> in ascending order. Since <code>repair_id</code> is a <code>TIMEUUID</code>, rows are naturally sorted by creation time — the oldest repair appears first.</p>
+  <div class="card-title">Composite Primary Key: <code>(order_id, repair_id)</code></div>
+  <p>Orders are identified by <code>order_id</code> and may contain multiple repairs. The composite primary key ensures each repair within an order is uniquely addressable. Queries filtering by <code>order_id</code> use a standard B-tree index on the primary key.</p>
 </div>
 
 <p><strong>Trade-offs:</strong></p>
 <ul>
-  <li>Listing all orders across all partitions requires a full table scan (no <code>ALLOW FILTERING</code> needed for <code>SELECT *</code>).</li>
-  <li>Cross-order queries (e.g. "all repairs for customer X") are not natively supported and would require a secondary index or materialised view.</li>
-  <li>The <code>repair_status</code> field is not indexed — status-based filtering across orders requires scanning.</li>
+  <li>Listing all orders across all rows is efficient via a full table scan or a covering index.</li>
+  <li>Cross-order queries (e.g. "all repairs for customer X") can be supported by the index on <code>customer_name</code>.</li>
+  <li><code>repair_status</code> is not indexed — status-based filtering across orders may require a full scan. Add an index if this becomes a bottleneck.</li>
 </ul>
 
 <!-- ==================== UUID GENERATION ==================== -->
 <h2 id="uuid-generation">UUID Generation</h2>
-<p>The backend generates three types of UUIDs for different purposes:</p>
+<p>The backend generates UUIDs for different purposes:</p>
 
 <table>
   <thead><tr><th>Field</th><th>UUID Type</th><th>Generation</th><th>Purpose</th></tr></thead>
   <tbody>
-    <tr><td><code>order_id</code></td><td>UUIDv4 (random)</td><td><code>uuid.uuid4()</code></td><td>Unpredictable partition key; prevents partition hot-spotting</td></tr>
-    <tr><td><code>repair_id</code></td><td>UUIDv1 (time-based)</td><td><code>uuid.uuid1()</code></td><td>Enables time-ordered clustering within a partition</td></tr>
-    <tr><td><code>order_creation</code></td><td>UUIDv1 (time-based)</td><td><code>uuid.uuid1()</code></td><td>Captures the creation timestamp in a sortable format</td></tr>
+    <tr><td><code>order_id</code></td><td>UUIDv4 (random)</td><td><code>uuid.uuid4()</code></td><td>Unpredictable identifier; prevents sequential ID guessing</td></tr>
+    <tr><td><code>repair_id</code></td><td>UUIDv4 (random)</td><td><code>uuid.uuid4()</code></td><td>Unique per repair item within an order</td></tr>
   </tbody>
 </table>
 
@@ -346,115 +335,112 @@ docker compose up -d</code></pre>
   </tbody>
 </table>
 
-<p>Status transitions are enforced by the backend business logic, not by Cassandra constraints. The database stores the raw status string as-is.</p>
+<p>Status transitions are enforced by the backend business logic, not by database constraints. The database stores the raw status string as-is.</p>
 
 <!-- ==================== DOCKER COMPOSE ==================== -->
 <h2 id="docker-compose">Docker Compose</h2>
 <p>The <code>docker-compose.yaml</code> defines two services:</p>
 
-<h3>Service: <code>cassandra</code></h3>
+<h3>Service: <code>postgres</code></h3>
 <table>
   <thead><tr><th>Attribute</th><th>Value</th></tr></thead>
   <tbody>
-    <tr><td>Image</td><td><code>cassandra:5.0.7</code></td></tr>
-    <tr><td>Container Name</td><td><code>cassandra_node</code></td></tr>
-    <tr><td>Port Mapping</td><td><code>9042:9042</code> (CQL native transport)</td></tr>
-    <tr><td>Cluster Name</td><td><code>MyCluster</code></td></tr>
-    <tr><td>Datacenter</td><td><code>datacenter1</code></td></tr>
-    <tr><td>Endpoint Snitch</td><td><code>GossipingPropertyFileSnitch</code></td></tr>
-    <tr><td>JVM Heap</td><td>Max 1G, New 200M</td></tr>
-    <tr><td>Data Volume</td><td><code>cassandra_data</code> (named volume, persisted across restarts)</td></tr>
-    <tr><td>Health Check</td><td><code>cqlsh -e 'describe keyspaces'</code> every 10s, 5s timeout, 10 retries</td></tr>
+    <tr><td>Image</td><td><code>postgres:16</code></td></tr>
+    <tr><td>Container Name</td><td><code>postgres_node</code></td></tr>
+    <tr><td>Port Mapping</td><td><code>5432:5432</code> (PostgreSQL native protocol)</td></tr>
+    <tr><td>Database Name</td><td><code>CC_Ordertracking</code></td></tr>
+    <tr><td>User</td><td><code>postgres</code></td></tr>
+    <tr><td>Password</td><td><code>Arthur@09</code></td></tr>
+    <tr><td>Data Volume</td><td><code>postgres_data</code> (named volume, persisted across restarts)</td></tr>
+    <tr><td>Health Check</td><td><code>pg_isready -U postgres -d CC_Ordertracking</code> every 10s, 5s timeout, 10 retries</td></tr>
     <tr><td>Restart Policy</td><td><code>always</code></td></tr>
   </tbody>
 </table>
 
-<h3>Service: <code>cassandra-init</code></h3>
+<h3>Service: <code>db-init</code></h3>
 <table>
   <thead><tr><th>Attribute</th><th>Value</th></tr></thead>
   <tbody>
-    <tr><td>Image</td><td><code>cassandra:5.0.7</code></td></tr>
-    <tr><td>Container Name</td><td><code>cassandra_init_script</code></td></tr>
-    <tr><td>Depends On</td><td><code>cassandra</code> (condition: <code>service_healthy</code>)</td></tr>
-    <tr><td>Volume Mount</td><td><code>./init.cql:/init.cql</code></td></tr>
-    <tr><td>Command</td><td><code>cqlsh cassandra_node -f /init.cql</code></td></tr>
+    <tr><td>Image</td><td><code>postgres:16</code></td></tr>
+    <tr><td>Container Name</td><td><code>postgres_init</code></td></tr>
+    <tr><td>Depends On</td><td><code>postgres</code> (condition: <code>service_healthy</code>)</td></tr>
+    <tr><td>Volume Mount</td><td><code>./init.sql:/init.sql</code></td></tr>
+    <tr><td>Command</td><td><code>psql -h postgres -U postgres -d CC_Ordertracking -f /init.sql</code></td></tr>
   </tbody>
 </table>
 
 <h3>Volumes</h3>
 <pre><code>volumes:
-  cassandra_data:</code></pre>
-<p>A named Docker volume <code>cassandra_data</code> is mounted at <code>/var/lib/cassandra</code> inside the container, ensuring data survives container restarts and upgrades.</p>
+  postgres_data:</code></pre>
+<p>A named Docker volume <code>postgres_data</code> is mounted at <code>/var/lib/postgresql/data</code> inside the container, ensuring data survives container restarts and upgrades.</p>
 
 <!-- ==================== CONNECTION ==================== -->
 <h2 id="connection">Connection Configuration</h2>
-<p>The Python backend connects to Cassandra using the <code>cassandra-driver</code> library via the <code>CassandraManager</code> class in <code>back-end/database.py</code>:</p>
+<p>The Python backend connects to PostgreSQL using SQLAlchemy with the <code>psycopg2</code> driver. Connection parameters are loaded from the <code>back-end/.env</code> file:</p>
 
 <table>
-  <thead><tr><th>Setting</th><th>Value</th><th>Location</th></tr></thead>
+  <thead><tr><th>Setting</th><th>Env Variable</th><th>Default Value</th><th>Location</th></tr></thead>
   <tbody>
-    <tr><td>Host</td><td><code>localhost</code></td><td><code>database.py:8</code> &mdash; default parameter</td></tr>
-    <tr><td>Port</td><td><code>9042</code></td><td><code>database.py:12</code> &mdash; hardcoded in <code>Cluster()</code> call</td></tr>
-    <tr><td>Keyspace</td><td><code>order_keyspace</code></td><td><code>database.py:8</code> &mdash; default parameter</td></tr>
-    <tr><td>I/O Reactor</td><td><code>AsyncioConnection</code></td><td><code>database.py:2</code></td></tr>
+    <tr><td>Host</td><td><code>POSTGRES_HOST</code></td><td><code>localhost</code></td><td><code>database.py</code></td></tr>
+    <tr><td>Port</td><td><code>POSTGRES_PORT</code></td><td><code>5432</code></td><td><code>database.py</code></td></tr>
+    <tr><td>Database</td><td><code>POSTGRES_DB</code></td><td><code>CC_Ordertracking</code></td><td><code>database.py</code></td></tr>
+    <tr><td>User</td><td><code>POSTGRES_USER</code></td><td><code>postgres</code></td><td><code>database.py</code></td></tr>
+    <tr><td>Password</td><td><code>POSTGRES_PASSWORD</code></td><td><code>Arthur@09</code></td><td><code>database.py</code></td></tr>
   </tbody>
 </table>
 
-<pre><code>from cassandra.cluster import Cluster
-from cassandra.io.asyncioreactor import AsyncioConnection
+<pre><code>from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
 
-cluster = Cluster(['localhost'], port=9042)
-session = cluster.connect()
-session.execute("CREATE KEYSPACE IF NOT EXISTS order_keyspace ...")
-session.set_keyspace('order_keyspace')</code></pre>
+SQLALCHEMY_DATABASE_URL = "postgresql+psycopg2://{user}:{password}@{host}:{port}/{db}"
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+SessionLocal = sessionmaker(bind=engine)</code></pre>
 
 <!-- ==================== DATA FLOW ==================== -->
 <h2 id="data-flow">Data Flow</h2>
 
 <h3>Startup Sequence</h3>
 <ol>
-  <li><strong>Docker Compose</strong> starts the <code>cassandra</code> container.</li>
-  <li>Cassandra initialises its cluster, datacenter, and internal tables.</li>
-  <li>The <strong>health check</strong> polls every 10s until <code>cqlsh -e 'describe keyspaces'</code> succeeds.</li>
-  <li>Once healthy, Docker Compose starts the <code>cassandra-init</code> container, which executes <code>init.cql</code> against the <code>cassandra_node</code> host.</li>
-  <li><code>init.cql</code> creates <code>order_keyspace</code> (if not exists) and <code>order_tracking</code> (if not exists).</li>
-  <li>The init container exits. The <code>cassandra</code> container remains running.</li>
+  <li><strong>Docker Compose</strong> starts the <code>postgres</code> container.</li>
+  <li>PostgreSQL initialises its data directory, creates the <code>CC_Ordertracking</code> database (via <code>POSTGRES_DB</code> env var).</li>
+  <li>The <strong>health check</strong> polls every 10s until <code>pg_isready</code> succeeds.</li>
+  <li>Once healthy, Docker Compose starts the <code>db-init</code> container, which executes <code>init.sql</code> against the <code>postgres</code> host.</li>
+  <li>The init container exits. The <code>postgres</code> container remains running.</li>
 </ol>
 
 <h3>Application Interaction</h3>
 <ol>
-  <li>The backend <code>CassandraManager.connect()</code> is called during FastAPI startup.</li>
-  <li>It creates a <code>Cluster</code> connection and sets the keyspace on the session.</li>
-  <li>Route handlers inject the session via the FastAPI dependency <code>get_cassandra_session()</code>.</li>
-  <li>All queries use parameterised <code>%s</code> placeholders to prevent CQL injection.</li>
-  <li>On FastAPI shutdown, <code>CassandraManager.close()</code> shuts down the cluster connection gracefully.</li>
+  <li>When the backend starts, <code>main.py</code> calls <code>Base.metadata.create_all(bind=engine)</code>, which creates the <code>order_tracking</code> table if it does not exist.</li>
+  <li>Route handlers inject a SQLAlchemy <code>Session</code> via the FastAPI dependency <code>get_database()</code>.</li>
+  <li>All queries use SQLAlchemy ORM methods, preventing SQL injection.</li>
+  <li>On FastAPI shutdown, sessions are closed automatically via the dependency's <code>finally</code> block.</li>
 </ol>
 
 <h3>Database Lifecycle Diagram</h3>
 <pre><code>docker compose up -d
         |
         v
-  cassandra:5.0.7 container starts
+  postgres:16 container starts
         |
         v
-  Health check: cqlsh -e 'describe keyspaces'
+  Health check: pg_isready -U postgres -d CC_Ordertracking
         |
         v (healthy)
-  cassandra-init runs init.cql
+  db-init runs init.sql
         |
         v
-  backend starts -> CassandraManager.connect()
+  backend starts -> Base.metadata.create_all()
         |
         v
-  FastAPI routes -> get_cassandra_session() -> CQL queries
+  FastAPI routes -> get_database() -> SQLAlchemy ORM queries
         |
         v
-  FastAPI shutdown -> CassandraManager.close()</code></pre>
+  FastAPI shutdown -> sessions closed automatically</code></pre>
 
 <hr style="margin: 3rem 0 1rem; border: none; border-top: 1px solid var(--border);">
 <p style="color: var(--text-muted); font-size: 0.85rem;">
   CC Order Tracking System &mdash; Database Documentation &mdash;
-  <em>Generated from codebase &mdash; May 2026</em>
+  <em>Generated from codebase &mdash; June 2026</em>
 </p>
 
 </div>

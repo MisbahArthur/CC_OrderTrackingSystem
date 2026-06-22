@@ -243,8 +243,8 @@
   users who view the status of their orders.
 </p>
 <p>
-  Built with <strong>FastAPI</strong>, the service connects to an <strong>Apache Cassandra</strong>
-  database for durable, scalable storage. The API is automatically documented via OpenAPI at
+  Built with <strong>FastAPI</strong>, the service connects to a <strong>PostgreSQL 16</strong>
+  database for reliable, ACID-compliant storage. The API is automatically documented via OpenAPI at
   <code>/docs</code> and <code>/redoc</code> when the server is running.
 </p>
 
@@ -259,8 +259,9 @@
     <tr><td>ASGI Server</td><td>Uvicorn</td><td>0.46.0</td></tr>
     <tr><td>Language</td><td>Python</td><td>3.14</td></tr>
     <tr><td>Data Validation</td><td>Pydantic</td><td>2.12.5</td></tr>
-    <tr><td>Database</td><td>Apache Cassandra</td><td>5.0.7</td></tr>
-    <tr><td>Cassandra Driver</td><td>cassandra-driver</td><td>3.30.0</td></tr>
+    <tr><td>Database</td><td>PostgreSQL</td><td>16</td></tr>
+    <tr><td>ORM</td><td>SQLAlchemy</td><td>&mdash;</td></tr>
+    <tr><td>DB Driver</td><td>psycopg2-binary</td><td>&mdash;</td></tr>
     <tr><td>Container Runtime</td><td>Docker (Compose)</td><td>&mdash;</td></tr>
   </tbody>
 </table>
@@ -270,27 +271,30 @@
 <pre><code>back-end/
   main.py            # Application entry point
   routes.py          # All API route definitions (APIRouter)
-  models.py          # Pydantic request/response schemas
-  database.py        # Cassandra connection manager
+  models.py          # Pydantic request/response schemas &amp; SQLAlchemy ORM model
+  database.py        # PostgreSQL connection via SQLAlchemy
   business_logic.py  # Helper functions
+  .env               # Environment variables (DB connection)
   .gitignore
   .venv/             # Python virtual environment
   __pycache__/       # Bytecode cache (generated)
 
 db/
-  docker-compose.yaml   # Cassandra 5.0.7 container
-  init.cql              # CQL schema (keyspace &amp; table)</code></pre>
+  docker-compose.yaml   # PostgreSQL 16 container
+  init.sql              # SQL schema (table creation)
+  init.cql              # Legacy Cassandra schema (kept for reference)</code></pre>
 
 <table>
   <thead><tr><th>File</th><th>Purpose</th></tr></thead>
   <tbody>
-    <tr><td><code>main.py</code></td><td>FastAPI app creation, CORS middleware, startup/shutdown lifecycle, router inclusion.</td></tr>
+    <tr><td><code>main.py</code></td><td>FastAPI app creation, CORS middleware, <code>Base.metadata.create_all()</code>, router inclusion.</td></tr>
     <tr><td><code>routes.py</code></td><td>Defines all REST endpoints on a single <code>APIRouter</code>.</td></tr>
-    <tr><td><code>models.py</code></td><td>Pydantic models for request bodies and data validation.</td></tr>
-    <tr><td><code>database.py</code></td><td><code>CassandraManager</code> singleton class for cluster connection and session management.</td></tr>
+    <tr><td><code>models.py</code></td><td>Pydantic schemas for request validation and <code>OrderTrackingDB</code> SQLAlchemy ORM model.</td></tr>
+    <tr><td><code>database.py</code></td><td>SQLAlchemy <code>engine</code>, <code>SessionLocal</code> factory, <code>get_database()</code> dependency, table creation.</td></tr>
     <tr><td><code>business_logic.py</code></td><td>Pure helper functions: <code>calculate_actual_hours</code> and <code>enrich_row</code>.</td></tr>
-    <tr><td><code>db/docker-compose.yaml</code></td><td>Docker Compose definition for the Cassandra container.</td></tr>
-    <tr><td><code>db/init.cql</code></td><td>Initial CQL statements to create the keyspace and table.</td></tr>
+    <tr><td><code>db/docker-compose.yaml</code></td><td>Docker Compose definition for the PostgreSQL container.</td></tr>
+    <tr><td><code>db/init.sql</code></td><td>Initial SQL statements to create the table.</td></tr>
+    <tr><td><code>db/init.cql</code></td><td>Legacy Cassandra schema — kept for reference, not used.</td></tr>
   </tbody>
 </table>
 
@@ -306,7 +310,7 @@ db/
 <h3>Setup</h3>
 <ol>
   <li>
-    <strong>Start Cassandra</strong>
+    <strong>Start PostgreSQL</strong>
     <pre><code>cd db
 docker compose up -d</code></pre>
   </li>
@@ -320,16 +324,18 @@ docker compose up -d</code></pre>
   </li>
 </ol>
 <p>The API will be available at <code>http://localhost:8000</code>. Interactive docs at <code>http://localhost:8000/docs</code>.</p>
+<p>Database connection is configured via the <code>.env</code> file in the <code>back-end/</code> directory.</p>
 
 <!-- ==================== DATABASE ==================== -->
 <h2 id="database">Database Schema</h2>
 
-<h3>Keyspace</h3>
+<h3>Database</h3>
 <table>
   <thead><tr><th>Property</th><th>Value</th></tr></thead>
   <tbody>
-    <tr><td>Name</td><td><code>order_keyspace</code></td></tr>
-    <tr><td>Replication</td><td><code>SimpleStrategy</code>, replication factor <code>1</code></td></tr>
+    <tr><td>Name</td><td><code>CC_Ordertracking</code></td></tr>
+    <tr><td>User</td><td><code>postgres</code></td></tr>
+    <tr><td>Port</td><td><code>5432</code></td></tr>
   </tbody>
 </table>
 
@@ -341,20 +347,19 @@ docker compose up -d</code></pre>
     <tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>order_id</code></td><td><code>UUID</code></td><td>PARTITION KEY</td><td>Random UUIDv4, generated on creation</td></tr>
-    <tr><td><code>repair_id</code></td><td><code>TIMEUUID</code></td><td>CLUSTERING KEY (ASC)</td><td>Time-based UUIDv1</td></tr>
-    <tr><td><code>customer_name</code></td><td><code>text</code></td><td></td><td></td></tr>
-    <tr><td><code>repair_device</code></td><td><code>text</code></td><td></td><td></td></tr>
-    <tr><td><code>order_creation</code></td><td><code>TIMEUUID</code></td><td></td><td>Time-based UUIDv1</td></tr>
-    <tr><td><code>repair_cost</code></td><td><code>decimal</code></td><td></td><td></td></tr>
-    <tr><td><code>repair_start</code></td><td><code>timestamp</code></td><td></td><td>Nullable</td></tr>
-    <tr><td><code>repair_finish</code></td><td><code>timestamp</code></td><td></td><td>Nullable</td></tr>
-    <tr><td><code>repair_status</code></td><td><code>text</code></td><td></td><td>Enumerated string (see below)</td></tr>
-    <tr><td><code>repair_eta</code></td><td><code>text</code></td><td></td><td></td></tr>
+    <tr><td><code>order_id</code></td><td><code>UUID</code></td><td>PK</td><td>Random UUIDv4, generated on creation</td></tr>
+    <tr><td><code>repair_id</code></td><td><code>UUID</code></td><td>PK</td><td>Random UUIDv4, unique per repair item</td></tr>
+    <tr><td><code>customer_name</code></td><td><code>VARCHAR</code></td><td></td><td></td></tr>
+    <tr><td><code>repair_device</code></td><td><code>VARCHAR</code></td><td></td><td></td></tr>
+    <tr><td><code>repair_cost</code></td><td><code>NUMERIC</code></td><td></td><td></td></tr>
+    <tr><td><code>repair_start</code></td><td><code>TIMESTAMP</code></td><td></td><td>Nullable</td></tr>
+    <tr><td><code>repair_finish</code></td><td><code>TIMESTAMP</code></td><td></td><td>Nullable</td></tr>
+    <tr><td><code>repair_status</code></td><td><code>VARCHAR</code></td><td></td><td>Enumerated string (see below)</td></tr>
+    <tr><td><code>repair_eta</code></td><td><code>VARCHAR</code></td><td></td><td></td></tr>
   </tbody>
 </table>
 
-<p><strong>Primary key:</strong> <code>(order_id, repair_id)</code> &mdash; clustered by <code>repair_id ASC</code>.</p>
+<p><strong>Primary key:</strong> <code>(order_id, repair_id)</code> &mdash; composite primary key.</p>
 
 <h3>Valid Status Values</h3>
 <table>
@@ -393,7 +398,6 @@ docker compose up -d</code></pre>
     "repair_id": "6ba7b810-9dad...",
     "customer_name": "Jane Doe",
     "repair_device": "MacBook Pro",
-    "order_creation": "2026-01-15 10:30:00",
     "repair_cost": "150.00",
     "repair_start": "2026-01-15 10:30:00",
     "repair_finish": null,
@@ -435,7 +439,7 @@ docker compose up -d</code></pre>
 <!-- POST /admin/createorders -->
 <div class="endpoint-block">
   <h4><span class="method-badge method-POST">POST</span> <code>/admin/createorders</code></h4>
-  <p>Create a new order with one or more repair items. Generates UUIDs for <code>order_id</code>, <code>repair_id</code> (per item), and <code>order_creation</code>.</p>
+  <p>Create a new order with one or more repair items. Generates UUIDs for <code>order_id</code> and <code>repair_id</code> (per item).</p>
 
   <p><strong>Request body:</strong></p>
   <pre><code>{
@@ -575,7 +579,7 @@ docker compose up -d</code></pre>
 
 <div class="card">
   <div class="card-title"><code>enrich_row(row)</code></div>
-  <p>Takes a raw Cassandra row, converts it to a dict via <code>_asdict()</code>, and attaches the <code>actual_hours</code> key computed from <code>calculate_actual_hours</code>. Used in admin endpoints to provide additional context.</p>
+  <p>Takes a SQLAlchemy ORM row, converts it to a dict dynamically using column names, and attaches the <code>actual_hours</code> key computed from <code>calculate_actual_hours</code>. Also casts UUIDs to strings for JSON serialisation. Used in admin endpoints to provide additional context.</p>
 </div>
 
 <!-- ==================== ARCHITECTURE ==================== -->
@@ -583,57 +587,58 @@ docker compose up -d</code></pre>
 
 <h3>Application Lifecycle</h3>
 <ol>
-  <li><strong>Startup:</strong> FastAPI creates the app, registers CORS middleware, then the <code>startup</code> event connects to Cassandra and ensures the keyspace exists.</li>
+  <li><strong>Startup:</strong> FastAPI creates the app, registers CORS middleware, then calls <code>Base.metadata.create_all(bind=engine)</code> to ensure tables exist.</li>
   <li><strong>Routing:</strong> All routes from <code>routes.py</code> are included via <code>app.include_router(router)</code>.</li>
-  <li><strong>Shutdown:</strong> The <code>shutdown</code> event closes the Cassandra cluster connection.</li>
+  <li><strong>Request handling:</strong> Each request gets a SQLAlchemy <code>Session</code> via the <code>get_database()</code> FastAPI dependency, which is closed in a <code>finally</code> block.</li>
 </ol>
 
 <h3>CORS Middleware</h3>
 <p>Configured to allow requests from both frontend applications:</p>
-<pre><code>allow_origins = ["http://localhost:3000", "http://localhost:3001"]
+<pre><code>allow_origins = ["http://localhost:8001", "http://localhost:8002"]
 allow_credentials = True
 allow_methods = ["*"]
 allow_headers = ["*"]</code></pre>
 
 <h3>Database Connection</h3>
-<p>The <code>CassandraManager</code> class (in <code>database.py</code>) is a singleton that manages a single cluster connection. The session is provided to route handlers via a FastAPI dependency <code>get_cassandra_session()</code>.</p>
+<p>SQLAlchemy <code>create_engine</code> (in <code>database.py</code>) establishes a connection pool to PostgreSQL. The <code>SessionLocal</code> factory creates scoped sessions, and the <code>get_database()</code> dependency injects a session into each route handler.</p>
 
 <h3>UUID Generation</h3>
 <table>
   <thead><tr><th>Field</th><th>Type</th><th>Generation</th></tr></thead>
   <tbody>
     <tr><td><code>order_id</code></td><td>UUIDv4 (random)</td><td><code>uuid.uuid4()</code></td></tr>
-    <tr><td><code>repair_id</code></td><td>UUIDv1 (time-based)</td><td><code>uuid.uuid1()</code></td></tr>
-    <tr><td><code>order_creation</code></td><td>UUIDv1 (time-based)</td><td><code>uuid.uuid1()</code></td></tr>
+    <tr><td><code>repair_id</code></td><td>UUIDv4 (random)</td><td><code>uuid.uuid4()</code></td></tr>
   </tbody>
 </table>
 
 <h3>Security Notes</h3>
 <ul>
   <li>There is currently <strong>no authentication or authorization</strong>. Admin and Customer paths are separated by URL convention only.</li>
-  <li>CQL injection is mitigated via parameterized queries (<code>%s</code> placeholders).</li>
+  <li>SQL injection is mitigated via SQLAlchemy ORM parameterised queries.</li>
   <li>No rate-limiting, request logging, or API key checks are in place.</li>
 </ul>
 
 <!-- ==================== CONFIGURATION ==================== -->
 <h2 id="configuration">Configuration</h2>
-<p>All configuration values are currently hardcoded. Below is a reference for where each value is set.</p>
+<p>Connection parameters are loaded from the <code>.env</code> file via <code>python-dotenv</code>. Below is a reference for each setting.</p>
 
 <table>
-  <thead><tr><th>Setting</th><th>Value</th><th>Location</th></tr></thead>
+  <thead><tr><th>Setting</th><th>Env Variable</th><th>Default</th><th>Location</th></tr></thead>
   <tbody>
-    <tr><td>Database host</td><td><code>localhost</code></td><td><code>main.py</code> startup event</td></tr>
-    <tr><td>Database port</td><td><code>9042</code></td><td><code>database.py</code> &mdash; Cluster() call</td></tr>
-    <tr><td>Keyspace name</td><td><code>order_keyspace</code></td><td><code>main.py</code> &amp; <code>database.py</code></td></tr>
-    <tr><td>CORS origins</td><td><code>localhost:3000, localhost:3001</code></td><td><code>main.py</code></td></tr>
-    <tr><td>Cassandra container image</td><td><code>cassandra:5.0.7</code></td><td><code>db/docker-compose.yaml</code></td></tr>
-    <tr><td>Container port mapping</td><td><code>9042:9042</code></td><td><code>db/docker-compose.yaml</code></td></tr>
+    <tr><td>Database host</td><td><code>POSTGRES_HOST</code></td><td><code>localhost</code></td><td><code>database.py</code></td></tr>
+    <tr><td>Database port</td><td><code>POSTGRES_PORT</code></td><td><code>5432</code></td><td><code>database.py</code></td></tr>
+    <tr><td>Database name</td><td><code>POSTGRES_DB</code></td><td><code>CC_Ordertracking</code></td><td><code>database.py</code></td></tr>
+    <tr><td>Database user</td><td><code>POSTGRES_USER</code></td><td><code>postgres</code></td><td><code>database.py</code></td></tr>
+    <tr><td>Database password</td><td><code>POSTGRES_PASSWORD</code></td><td><code>Arthur@09</code></td><td><code>database.py</code></td></tr>
+    <tr><td>CORS origins</td><td>&mdash;</td><td><code>localhost:8001, localhost:8002</code></td><td><code>main.py</code></td></tr>
+    <tr><td>PostgreSQL container image</td><td>&mdash;</td><td><code>postgres:16</code></td><td><code>db/docker-compose.yaml</code></td></tr>
+    <tr><td>Container port mapping</td><td>&mdash;</td><td><code>5432:5432</code></td><td><code>db/docker-compose.yaml</code></td></tr>
   </tbody>
 </table>
 
 <hr style="margin: 3rem 0 1rem; border: none; border-top: 1px solid var(--border);">
 <p style="color: var(--text-muted); font-size: 0.85rem;">
-  Generated from codebase &mdash; May 2026 &mdash; 
+  Generated from codebase &mdash; June 2026 &mdash; 
   <em>CC Order Tracking System Backend</em>
 </p>
 
