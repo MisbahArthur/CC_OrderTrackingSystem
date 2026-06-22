@@ -14,7 +14,8 @@ async def lifespan(app: FastAPI):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8001", "http://localhost:8002"],
+    # allow_origins=["http://localhost:8001", "http://localhost:8002", "http://localhost:3000", "http://localhost:3001"],
+    allow_origins=["*"],  # Allow all origins for development purposes
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

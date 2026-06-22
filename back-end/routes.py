@@ -32,7 +32,7 @@ def get_order_repairs(order_id: str, session: Session = Depends(get_database)):
 @router.put("/admin/updateorder/{order_id}")
 def update_order(order_id: str, repair_id: str, repair_status: Optional[str] = None,
                     repair_cost: Optional[float] = None, repair_eta: Optional[str] = None, session: Session = Depends(get_database)):
-        current_time = datetime.datetime.now().replace(microsecond=0)
+        current_time = datetime.datetime.now()
 
         repair = session.query(OrderTrackingDB).filter(
             OrderTrackingDB.order_id == order_id, 

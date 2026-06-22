@@ -1,35 +1,35 @@
 services:
-  cassandra:
-    image: cassandra:5.0.7
-    container_name: cassandra_node
+  postgres:
+    image: postgres:16
+    container_name: postgres_node
     ports:
-      - "9042:9042"
+      - "5432:5432"
     environment:
-      - CASSANDRA_CLUSTER_NAME=MyCluster
-      - CASSANDRA_DC=datacenter1
-      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
-      - MAX_HEAP_SIZE=1G
-      - HEAP_NEWSIZE=200M
+      POSTGRES_DB: CC_Ordertracking
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Arthur@09
     volumes:
-      - cassandra_data:/var/lib/cassandra
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      # Updated to check CQL readiness specifically
-      test: ["CMD-SHELL", "cqlsh -e 'describe keyspaces'"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d CC_Ordertracking"]
       interval: 10s
       timeout: 5s
       retries: 10
     restart: always
 
-  cassandra-init:
-    image: cassandra:5.0.7
-    container_name: cassandra_init_script
+  db-init:
+    image: postgres:16
+    container_name: postgres_init
     depends_on:
-      cassandra:
+      postgres:
         condition: service_healthy
     volumes:
-      - ./init.cql:/init.cql
-    # We use 'cassandra_node' as the host to match your container_name
-    command: /bin/bash -c "echo 'Loading schema...' && cqlsh cassandra_node -f /init.cql"
+      - ./init.sql:/init.sql
+    command: >
+      /bin/bash -c "
+      echo 'Loading schema...' &&
+      PGPASSWORD=Arthur@09 psql -h postgres -U postgres -d CC_Ordertracking -f /init.sql
+      "
 
 volumes:
-  cassandra_data:
+  postgres_data:
